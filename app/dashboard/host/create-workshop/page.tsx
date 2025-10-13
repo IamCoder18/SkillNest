@@ -75,8 +75,49 @@ export default async function CreateWorkshopPage() {
     const maxParticipants = Number.parseInt(formData.get("max_participants") as string)
     const location = formData.get("location") as string
 
-    // Create Date object treating input as UTC to avoid timezone issues
-    const sessionDateTime = new Date(`${sessionDate}T${sessionTime}:00.000Z`)
+    // Debug logging for timezone handling
+    console.log("=== CREATE WORKSHOP DEBUG ===")
+    console.log("Raw session_date input:", sessionDate)
+    console.log("Raw session_time input:", sessionTime)
+    console.log("Current server time (UTC):", new Date().toISOString())
+    console.log("Server timezone offset (minutes):", new Date().getTimezoneOffset())
+
+    // Construct date string with explicit UTC
+    const dateTimeString = `${sessionDate}T${sessionTime}:00.000Z`
+    console.log("Constructed dateTimeString:", dateTimeString)
+
+    const sessionDateTime = new Date(dateTimeString)
+    console.log("Parsed Date object:", sessionDateTime)
+    console.log("Date object UTC string:", sessionDateTime.toISOString())
+    console.log("Date object local string:", sessionDateTime.toString())
+    console.log("Date object UTC time:", sessionDateTime.getTime())
+    console.log("Date object UTC hours:", sessionDateTime.getUTCHours())
+    console.log("Date object local hours:", sessionDateTime.getHours())
+
+    // Validate the date is not in the past
+    const now = new Date()
+    console.log("Current time comparison:", {
+      sessionTime: sessionDateTime.getTime(),
+      currentTime: now.getTime(),
+      isInPast: sessionDateTime.getTime() < now.getTime(),
+      differenceMinutes: Math.floor((sessionDateTime.getTime() - now.getTime()) / (1000 * 60))
+    })
+
+    if (sessionDateTime.getTime() < now.getTime()) {
+      console.error("ERROR: Session date is in the past!")
+      throw new Error("Session date cannot be in the past")
+    }
+
+    console.log("Inserting workshop with data:", {
+      host_id: hostProfile.id,
+      title,
+      session_date: sessionDateTime.toISOString(),
+      duration_hours: durationHours,
+      price,
+      max_participants: maxParticipants,
+      location,
+      status: "active"
+    })
 
     const { error } = await supabase.from("workshops").insert({
       host_id: hostProfile.id,
@@ -93,10 +134,17 @@ export default async function CreateWorkshopPage() {
     })
 
     if (error) {
-      console.error(error)
-      return
+      console.error("Supabase workshop insert error:", error)
+      console.error("Error details:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      throw new Error(`Failed to create workshop: ${error.message}`)
     }
 
+    console.log("Workshop created successfully!")
     redirect("/dashboard/host")
   }
 

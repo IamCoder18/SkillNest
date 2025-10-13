@@ -40,8 +40,37 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
       } = await supabase.auth.getUser()
       if (!user) throw new Error("You must be logged in to book a session")
 
+      // Debug logging for timezone handling
+      console.log("=== BOOKING FORM DEBUG ===")
+      console.log("Raw sessionDate input:", sessionDate)
+      console.log("Raw sessionTime input:", sessionTime)
+      console.log("Current client time (UTC):", new Date().toISOString())
+      console.log("Client timezone offset (minutes):", new Date().getTimezoneOffset())
+
       // Combine date and time, treating as UTC to avoid timezone issues
-      const sessionDateTime = new Date(`${sessionDate}T${sessionTime}:00.000Z`)
+      const dateTimeString = `${sessionDate}T${sessionTime}:00.000Z`
+      console.log("Constructed dateTimeString:", dateTimeString)
+
+      const sessionDateTime = new Date(dateTimeString)
+      console.log("Parsed Date object:", sessionDateTime)
+      console.log("Date object UTC string:", sessionDateTime.toISOString())
+      console.log("Date object local string:", sessionDateTime.toString())
+      console.log("Date object UTC time:", sessionDateTime.getTime())
+      console.log("Date object UTC hours:", sessionDateTime.getUTCHours())
+      console.log("Date object local hours:", sessionDateTime.getHours())
+
+      // Validate the date is not in the past
+      const now = new Date()
+      console.log("Booking time comparison:", {
+        sessionTime: sessionDateTime.getTime(),
+        currentTime: now.getTime(),
+        isInPast: sessionDateTime.getTime() < now.getTime(),
+        differenceMinutes: Math.floor((sessionDateTime.getTime() - now.getTime()) / (1000 * 60))
+      })
+
+      if (sessionDateTime.getTime() < now.getTime()) {
+        throw new Error("Booking date cannot be in the past")
+      }
 
       // Create booking
       const { error: bookingError } = await supabase.from("bookings").insert({
@@ -53,14 +82,28 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
         status: "pending",
       })
 
-      if (bookingError) throw bookingError
+      if (bookingError) {
+        console.error("Supabase booking error:", bookingError)
+        throw bookingError
+      }
+
+      console.log("Booking created successfully:", {
+        host_id: hostId,
+        learner_id: user.id,
+        session_date: sessionDateTime.toISOString(),
+        skill,
+        status: "pending"
+      })
 
       setSuccess(true)
       setTimeout(() => {
         router.push("/dashboard/learner")
       }, 2000)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      console.error("Booking form error:", err)
+      const errorMessage = err instanceof Error ? err.message : "An error occurred"
+      console.error("Error message:", errorMessage)
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }

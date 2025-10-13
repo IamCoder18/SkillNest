@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import Image from "next/image"
 import {
-  Wrench,
   Car,
   Hammer,
   Palette,
@@ -17,7 +17,7 @@ import {
 const NFT_CATEGORIES = [
   {
     name: "Woodworking",
-    icon: Wrench,
+    icon: "wood-nft",
     color: "bg-amber-100 text-amber-800",
     iconColor: "text-amber-600"
   },
@@ -133,8 +133,18 @@ export default async function NFTsPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${category.color}`}>
-                        <IconComponent className={`h-6 w-6 ${category.iconColor}`} />
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${category.color} overflow-hidden`}>
+                        {category.icon === "wood-nft" ? (
+                          <Image
+                            src="/wood_nft.png"
+                            alt="Woodworking NFT"
+                            width={32}
+                            height={32}
+                            className="rounded-full"
+                          />
+                        ) : (
+                          <IconComponent className={`h-6 w-6 ${category.iconColor}`} />
+                        )}
                       </div>
                       <CardTitle className="text-lg">{category.name}</CardTitle>
                     </div>

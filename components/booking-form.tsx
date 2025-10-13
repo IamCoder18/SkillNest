@@ -47,28 +47,30 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
       console.log("Current client time (UTC):", new Date().toISOString())
       console.log("Client timezone offset (minutes):", new Date().getTimezoneOffset())
 
-      // Combine date and time, treating as UTC to avoid timezone issues
-      const dateTimeString = `${sessionDate}T${sessionTime}:00.000Z`
-      console.log("Constructed dateTimeString:", dateTimeString)
+      // The issue: User enters time in their local timezone, but we need to store as UTC
+      // We need to interpret the user's local time input and convert it to UTC
 
-      const sessionDateTime = new Date(dateTimeString)
-      console.log("Parsed Date object:", sessionDateTime)
-      console.log("Date object UTC string:", sessionDateTime.toISOString())
-      console.log("Date object local string:", sessionDateTime.toString())
-      console.log("Date object UTC time:", sessionDateTime.getTime())
-      console.log("Date object UTC hours:", sessionDateTime.getUTCHours())
-      console.log("Date object local hours:", sessionDateTime.getHours())
+      // Create a date object by interpreting the input as local time, then convert to UTC
+      const userLocalDateTime = new Date(`${sessionDate}T${sessionTime}:00`)
+      console.log("User local dateTime interpretation:", userLocalDateTime)
+      console.log("User local time string:", userLocalDateTime.toString())
 
-      // Validate the date is not in the past
+      // Convert to UTC for storage - this is what should be stored in Supabase
+      const sessionDateTimeUTC = new Date(userLocalDateTime.getTime() + (userLocalDateTime.getTimezoneOffset() * 60000))
+      console.log("Converted to UTC for storage:", sessionDateTimeUTC)
+      console.log("UTC time string:", sessionDateTimeUTC.toISOString())
+      console.log("UTC timestamp:", sessionDateTimeUTC.getTime())
+
+      // Validate the date is not in the past (using UTC comparison)
       const now = new Date()
-      console.log("Booking time comparison:", {
-        sessionTime: sessionDateTime.getTime(),
-        currentTime: now.getTime(),
-        isInPast: sessionDateTime.getTime() < now.getTime(),
-        differenceMinutes: Math.floor((sessionDateTime.getTime() - now.getTime()) / (1000 * 60))
+      console.log("Booking time comparison (UTC):", {
+        sessionTimeUTC: sessionDateTimeUTC.getTime(),
+        currentTimeUTC: now.getTime(),
+        isInPast: sessionDateTimeUTC.getTime() < now.getTime(),
+        differenceMinutes: Math.floor((sessionDateTimeUTC.getTime() - now.getTime()) / (1000 * 60))
       })
 
-      if (sessionDateTime.getTime() < now.getTime()) {
+      if (sessionDateTimeUTC.getTime() < now.getTime()) {
         throw new Error("Booking date cannot be in the past")
       }
 
@@ -76,7 +78,7 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
       const { error: bookingError } = await supabase.from("bookings").insert({
         host_id: hostId,
         learner_id: user.id,
-        session_date: sessionDateTime.toISOString(),
+        session_date: sessionDateTimeUTC.toISOString(),
         skill,
         notes,
         status: "pending",
@@ -90,7 +92,7 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
       console.log("Booking created successfully:", {
         host_id: hostId,
         learner_id: user.id,
-        session_date: sessionDateTime.toISOString(),
+        session_date: sessionDateTimeUTC.toISOString(),
         skill,
         status: "pending"
       })

@@ -97,7 +97,7 @@ export default async function CreateWorkshopPage() {
     console.log("UTC time string:", sessionDateTimeUTC.toISOString())
     console.log("UTC timestamp:", sessionDateTimeUTC.getTime())
 
-    // Validate the date is not in the past (using UTC comparison)
+    // Log time comparison for debugging (but allow past dates)
     const now = new Date()
     console.log("Current time comparison (UTC):", {
       sessionTimeUTC: sessionDateTimeUTC.getTime(),
@@ -106,10 +106,7 @@ export default async function CreateWorkshopPage() {
       differenceMinutes: Math.floor((sessionDateTimeUTC.getTime() - now.getTime()) / (1000 * 60))
     })
 
-    if (sessionDateTimeUTC.getTime() < now.getTime()) {
-      console.error("ERROR: Session date is in the past!")
-      throw new Error("Session date cannot be in the past")
-    }
+    // Note: Allowing past dates as requested
 
     console.log("Inserting workshop with data:", {
       host_id: hostProfile.id,

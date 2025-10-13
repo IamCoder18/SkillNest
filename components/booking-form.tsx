@@ -61,7 +61,7 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
       console.log("UTC time string:", sessionDateTimeUTC.toISOString())
       console.log("UTC timestamp:", sessionDateTimeUTC.getTime())
 
-      // Validate the date is not in the past (using UTC comparison)
+      // Log time comparison for debugging (but allow past dates)
       const now = new Date()
       console.log("Booking time comparison (UTC):", {
         sessionTimeUTC: sessionDateTimeUTC.getTime(),
@@ -70,9 +70,7 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
         differenceMinutes: Math.floor((sessionDateTimeUTC.getTime() - now.getTime()) / (1000 * 60))
       })
 
-      if (sessionDateTimeUTC.getTime() < now.getTime()) {
-        throw new Error("Booking date cannot be in the past")
-      }
+      // Note: Allowing past dates as requested
 
       // Create booking
       const { error: bookingError } = await supabase.from("bookings").insert({

@@ -75,7 +75,8 @@ export default async function CreateWorkshopPage() {
     const maxParticipants = Number.parseInt(formData.get("max_participants") as string)
     const location = formData.get("location") as string
 
-    const sessionDateTime = new Date(`${sessionDate}T${sessionTime}`)
+    // Create Date object treating input as UTC to avoid timezone issues
+    const sessionDateTime = new Date(`${sessionDate}T${sessionTime}:00.000Z`)
 
     const { error } = await supabase.from("workshops").insert({
       host_id: hostProfile.id,
@@ -92,6 +93,7 @@ export default async function CreateWorkshopPage() {
     })
 
     if (error) {
+      console.error(error)
       return
     }
 

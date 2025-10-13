@@ -40,8 +40,8 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
       } = await supabase.auth.getUser()
       if (!user) throw new Error("You must be logged in to book a session")
 
-      // Combine date and time
-      const sessionDateTime = new Date(`${sessionDate}T${sessionTime}`)
+      // Combine date and time, treating as UTC to avoid timezone issues
+      const sessionDateTime = new Date(`${sessionDate}T${sessionTime}:00.000Z`)
 
       // Create booking
       const { error: bookingError } = await supabase.from("bookings").insert({

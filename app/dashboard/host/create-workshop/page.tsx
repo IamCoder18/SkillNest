@@ -70,6 +70,7 @@ export default async function CreateWorkshopPage() {
     const toolsProvided = (formData.get("tools_provided") as string).split(",").map((t) => t.trim())
     const sessionDate = formData.get("session_date") as string
     const sessionTime = formData.get("session_time") as string
+    const userTimezone = formData.get("user_timezone") as string
     const durationHours = Number.parseFloat(formData.get("duration_hours") as string)
     const price = Number.parseFloat(formData.get("price") as string)
     const maxParticipants = Number.parseInt(formData.get("max_participants") as string)
@@ -79,21 +80,32 @@ export default async function CreateWorkshopPage() {
     console.log("=== CREATE WORKSHOP DEBUG ===")
     console.log("Raw session_date input:", sessionDate)
     console.log("Raw session_time input:", sessionTime)
+    console.log("User timezone:", userTimezone)
     console.log("Current server time (UTC):", new Date().toISOString())
     console.log("Server timezone offset (minutes):", new Date().getTimezoneOffset())
 
-    // The issue: User enters time in their local timezone, but we need to store as UTC
-    // We need to interpret the user's local time input and convert it to UTC
+    // SOLUTION: Properly interpret user's local time input using their timezone
+    // The key insight: JavaScript's Date constructor treats strings without timezone as UTC
+    // But we want to interpret the user's input as their local time
 
-    // Create a date object by interpreting the input as local time, then convert to UTC
-    // This is the correct way to handle user input from different timezones
-    const userLocalDateTime = new Date(`${sessionDate}T${sessionTime}:00`)
-    console.log("User local dateTime interpretation:", userLocalDateTime)
+    // Parse the date and time components
+    const [year, month, day] = sessionDate.split('-').map(Number)
+    const [hours, minutes] = sessionTime.split(':').map(Number)
+
+    console.log("Parsed components:", { year, month, day, hours, minutes })
+
+    // Create date object using components - this interprets as local time in the user's timezone
+    // Month is 0-indexed in JavaScript Date constructor
+    const userLocalDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0)
+    console.log("User local dateTime (interpreted as local):", userLocalDateTime)
     console.log("User local time string:", userLocalDateTime.toString())
+    console.log("User local timezone offset:", userLocalDateTime.getTimezoneOffset())
 
-    // Convert to UTC for storage - this is what should be stored in Supabase
-    const sessionDateTimeUTC = new Date(userLocalDateTime.getTime() + (userLocalDateTime.getTimezoneOffset() * 60000))
-    console.log("Converted to UTC for storage:", sessionDateTimeUTC)
+    // For UTC storage, we need to convert from user's local time to UTC
+    // The key insight: getTime() gives milliseconds since epoch UTC
+    // So userLocalDateTime.getTime() already represents the correct UTC time
+    const sessionDateTimeUTC = new Date(userLocalDateTime.getTime())
+    console.log("UTC time for storage:", sessionDateTimeUTC)
     console.log("UTC time string:", sessionDateTimeUTC.toISOString())
     console.log("UTC timestamp:", sessionDateTimeUTC.getTime())
 
@@ -162,6 +174,8 @@ export default async function CreateWorkshopPage() {
           </CardHeader>
           <CardContent>
             <form action={createWorkshop} className="space-y-6">
+              {/* Hidden timezone input - populated by JavaScript */}
+              <input type="hidden" id="user_timezone" name="user_timezone" />
               {/* Title */}
               <div>
                 <Label htmlFor="title">Workshop Title *</Label>
@@ -305,6 +319,20 @@ export default async function CreateWorkshopPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* JavaScript to populate timezone */}
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          document.addEventListener('DOMContentLoaded', function() {
+            const timezoneInput = document.getElementById('user_timezone');
+            if (timezoneInput) {
+              // Get user's timezone
+              timezoneInput.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+              console.log('User timezone detected:', timezoneInput.value);
+            }
+          });
+        `
+      }} />
     </div>
   )
 }

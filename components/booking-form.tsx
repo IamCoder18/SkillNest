@@ -47,17 +47,20 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
       console.log("Current client time (UTC):", new Date().toISOString())
       console.log("Client timezone offset (minutes):", new Date().getTimezoneOffset())
 
-      // The issue: User enters time in their local timezone, but we need to store as UTC
-      // We need to interpret the user's local time input and convert it to UTC
+      // Parse the date and time components
+      const [year, month, day] = sessionDate.split('-').map(Number)
+      const [hours, minutes] = sessionTime.split(':').map(Number)
 
-      // Create a date object by interpreting the input as local time, then convert to UTC
-      const userLocalDateTime = new Date(`${sessionDate}T${sessionTime}:00`)
-      console.log("User local dateTime interpretation:", userLocalDateTime)
+      console.log("Parsed components:", { year, month, day, hours, minutes })
+
+      // Create date object using components - this interprets as local time in the user's timezone
+      const userLocalDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0)
+      console.log("User local dateTime (interpreted as local):", userLocalDateTime)
       console.log("User local time string:", userLocalDateTime.toString())
 
-      // Convert to UTC for storage - this is what should be stored in Supabase
-      const sessionDateTimeUTC = new Date(userLocalDateTime.getTime() + (userLocalDateTime.getTimezoneOffset() * 60000))
-      console.log("Converted to UTC for storage:", sessionDateTimeUTC)
+      // For UTC storage, getTime() already gives us the correct UTC timestamp
+      const sessionDateTimeUTC = new Date(userLocalDateTime.getTime())
+      console.log("UTC time for storage:", sessionDateTimeUTC)
       console.log("UTC time string:", sessionDateTimeUTC.toISOString())
       console.log("UTC timestamp:", sessionDateTimeUTC.getTime())
 
@@ -125,6 +128,8 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Hidden timezone input - populated by JavaScript */}
+      <input type="hidden" id="user_timezone" name="user_timezone" />
       <div className="space-y-2">
         <Label htmlFor="skill">Skill to Learn</Label>
         <Select value={skill} onValueChange={setSkill} required>
@@ -178,6 +183,19 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
       <p className="text-xs text-muted-foreground text-center">
         The host will review your request and confirm availability
       </p>
+
+      {/* JavaScript to populate timezone */}
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          document.addEventListener('DOMContentLoaded', function() {
+            const timezoneInput = document.getElementById('user_timezone');
+            if (timezoneInput) {
+              timezoneInput.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+              console.log('Booking form - User timezone detected:', timezoneInput.value);
+            }
+          });
+        `
+      }} />
     </form>
   )
 }

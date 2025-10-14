@@ -113,9 +113,6 @@ export default async function HostDashboardPage() {
                 Settings
               </Link>
             </Button>
-            <Button asChild variant="outline">
-              <Link href="/dashboard/nfts">View my NFTs</Link>
-            </Button>
             <Button asChild>
               <Link href="/dashboard/host/create-workshop">
                 <Plus className="mr-2 h-4 w-4" />

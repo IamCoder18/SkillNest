@@ -60,9 +60,6 @@ export default async function LearnerDashboardPage() {
               <Link href="/browse">Find More Workshops</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/dashboard/nfts">View my NFTs</Link>
-            </Button>
-            <Button asChild variant="outline">
               <Link href="/dashboard/host/setup">Become a Host</Link>
             </Button>
           </div>

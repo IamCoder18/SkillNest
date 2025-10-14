@@ -31,6 +31,22 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
     setIsLoading(true)
     setError(null)
 
+    // Convert to UTC on the client side (browser's timezone context)
+    const [year, month, day] = sessionDate.split('-').map(Number)
+    const [hours, minutes] = sessionTime.split(':').map(Number)
+
+    // Create date in user's local timezone context (browser)
+    const userLocalDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0)
+
+    // Convert to UTC timestamp for server
+    const utcTimestamp = userLocalDateTime.toISOString()
+
+    console.log("=== CLIENT-SIDE BOOKING TIMEZONE DEBUG ===")
+    console.log("User local time input:", `${sessionDate} ${sessionTime}`)
+    console.log("Browser timezone:", Intl.DateTimeFormat().resolvedOptions().timeZone)
+    console.log("User local dateTime:", userLocalDateTime)
+    console.log("Converted UTC timestamp:", utcTimestamp)
+
     const supabase = createClient()
 
     try {
@@ -40,60 +56,43 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
       } = await supabase.auth.getUser()
       if (!user) throw new Error("You must be logged in to book a session")
 
-      // Debug logging for timezone handling
-      console.log("=== BOOKING FORM DEBUG ===")
-      console.log("Raw sessionDate input:", sessionDate)
-      console.log("Raw sessionTime input:", sessionTime)
-      console.log("Current client time (UTC):", new Date().toISOString())
-      console.log("Client timezone offset (minutes):", new Date().getTimezoneOffset())
-
-      // Parse the date and time components
-      const [year, month, day] = sessionDate.split('-').map(Number)
-      const [hours, minutes] = sessionTime.split(':').map(Number)
-
-      console.log("Parsed components:", { year, month, day, hours, minutes })
-
-      // Create date object using components - this interprets as local time in the user's timezone
-      const userLocalDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0)
-      console.log("User local dateTime (interpreted as local):", userLocalDateTime)
-      console.log("User local time string:", userLocalDateTime.toString())
-
-      // For UTC storage, getTime() already gives us the correct UTC timestamp
-      const sessionDateTimeUTC = new Date(userLocalDateTime.getTime())
-      console.log("UTC time for storage:", sessionDateTimeUTC)
-      console.log("UTC time string:", sessionDateTimeUTC.toISOString())
-      console.log("UTC timestamp:", sessionDateTimeUTC.getTime())
-
       // Log time comparison for debugging (but allow past dates)
-      const now = new Date()
+      const currentTime = new Date()
       console.log("Booking time comparison (UTC):", {
-        sessionTimeUTC: sessionDateTimeUTC.getTime(),
-        currentTimeUTC: now.getTime(),
-        isInPast: sessionDateTimeUTC.getTime() < now.getTime(),
-        differenceMinutes: Math.floor((sessionDateTimeUTC.getTime() - now.getTime()) / (1000 * 60))
+        sessionTimeUTC: userLocalDateTime.getTime(),
+        currentTimeUTC: currentTime.getTime(),
+        isInPast: userLocalDateTime.getTime() < currentTime.getTime(),
+        differenceMinutes: Math.floor((userLocalDateTime.getTime() - currentTime.getTime()) / (1000 * 60))
       })
 
       // Note: Allowing past dates as requested
 
-      // Create booking
-      const { error: bookingError } = await supabase.from("bookings").insert({
-        host_id: hostId,
-        learner_id: user.id,
-        session_date: sessionDateTimeUTC.toISOString(),
-        skill,
-        notes,
-        status: "pending",
+      // Create booking via API route
+      const formDataToSend = new FormData()
+      formDataToSend.set("host_id", hostId)
+      formDataToSend.set("session_date", utcTimestamp)
+      formDataToSend.set("skill", skill)
+      formDataToSend.set("notes", notes)
+
+      const response = await fetch('/api/create-booking', {
+        method: 'POST',
+        body: formDataToSend,
       })
 
-      if (bookingError) {
-        console.error("Supabase booking error:", bookingError)
-        throw bookingError
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.error) {
+        throw new Error(result.error)
       }
 
       console.log("Booking created successfully:", {
         host_id: hostId,
         learner_id: user.id,
-        session_date: sessionDateTimeUTC.toISOString(),
+        session_date: utcTimestamp,
         skill,
         status: "pending"
       })

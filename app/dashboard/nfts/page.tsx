@@ -2,76 +2,21 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import Link from "next/link"
-import { ArrowLeft, Wrench, Car, Hammer, Palette, Cpu, Home, MoreHorizontal, ChevronDown, Calendar, MapPin, Clock } from "lucide-react"
+import { ArrowLeft, Calendar, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react"
+import Image from "next/image"
+import { ConfettiOnLoad } from "@/components/ui/confetti"
 
-// NFT Categories Configuration
-const NFT_CATEGORIES = [
-  {
-    id: "woodworking",
-    name: "Woodworking",
-    icon: Wrench,
-    color: "bg-amber-500",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-200",
-    textColor: "text-amber-700"
-  },
-  {
-    id: "auto-skills",
-    name: "Auto Skills",
-    icon: Car,
-    color: "bg-blue-500",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
-    textColor: "text-blue-700"
-  },
-  {
-    id: "metalwork",
-    name: "Metalwork",
-    icon: Hammer,
-    color: "bg-gray-500",
-    bgColor: "bg-gray-50",
-    borderColor: "border-gray-200",
-    textColor: "text-gray-700"
-  },
-  {
-    id: "crafts-textiles",
-    name: "Crafts & Textiles",
-    icon: Palette,
-    color: "bg-pink-500",
-    bgColor: "bg-pink-50",
-    borderColor: "border-pink-200",
-    textColor: "text-pink-700"
-  },
-  {
-    id: "digital-fabrication",
-    name: "Digital Fabrication",
-    icon: Cpu,
-    color: "bg-purple-500",
-    bgColor: "bg-purple-50",
-    borderColor: "border-purple-200",
-    textColor: "text-purple-700"
-  },
-  {
-    id: "home-repairs",
-    name: "Home Repairs",
-    icon: Home,
-    color: "bg-green-500",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
-    textColor: "text-green-700"
-  },
-  {
-    id: "other",
-    name: "Other",
-    icon: MoreHorizontal,
-    color: "bg-orange-500",
-    bgColor: "bg-orange-50",
-    borderColor: "border-orange-200",
-    textColor: "text-orange-700"
-  }
-] as const
+// NFT Images Configuration
+const NFT_IMAGES: { [key: string]: string } = {
+  "woodworking": "/WoodworkingNFT.avif",
+  "auto-skills": "/AutoSkillsNFT.avif",
+  "metalwork": "/MetalworkNFT.avif",
+  "crafts-textiles": "/CraftsTexilesNFT.avif",
+  "digital-fabrication": "/DigitalFabricationNFT.avif",
+  "home-repairs": "/HomeRepairsNFT.avif",
+  "other": "/OtherNFT.avif"
+}
 
 export default async function NFTsPage() {
   const supabase = await createClient()
@@ -85,7 +30,7 @@ export default async function NFTsPage() {
   }
 
   // Fetch completed bookings as learner only (workshops user has taken)
-  let learnerBookings = []
+  let learnerBookings: any[] = []
 
   try {
     const { data: learnerResult } = await supabase
@@ -94,6 +39,7 @@ export default async function NFTsPage() {
         *,
         workshops(
           title,
+          description,
           session_date,
           location,
           skills
@@ -101,111 +47,87 @@ export default async function NFTsPage() {
       `)
       .eq("learner_id", user.id)
       .eq("status", "completed")
+      .order("created_at", { ascending: false })
 
-    learnerBookings = (learnerResult || []).filter(booking => booking.workshops)
+    learnerBookings = (learnerResult || []).filter((booking: any) => booking.workshops)
   } catch (error) {
     console.error("Error fetching NFT data:", error)
-    // Continue with empty arrays - the UI will show zeros
+    learnerBookings = []
   }
 
-  // Use only learner sessions (workshops user has completed as a learner)
-  const allSessions = learnerBookings
-
-  // Helper function to categorize a single workshop
-  const categorizeWorkshop = (workshop: any): string => {
+  // Helper function to get NFT image for a workshop based on skills
+  const getNFTImageForWorkshop = (workshop: any): string => {
     const skills = workshop?.skills || []
 
     if (!skills || skills.length === 0) {
-      return 'other'
+      return NFT_IMAGES["other"]
     }
 
-    // Check each skill against categories in order of specificity
+    // Check skills against categories to find the right NFT image
     for (const skill of skills) {
       const skillLower = skill?.toLowerCase() || ''
 
-      // Digital Fabrication (most specific for 3D printing)
       if (skillLower.includes('3d printing') || skillLower.includes('3d print') ||
           skillLower.includes('cnc') || skillLower.includes('laser') ||
           skillLower.includes('cad') || skillLower.includes('digital fabrication')) {
-        return 'digital-fabrication'
+        return NFT_IMAGES["digital-fabrication"]
       }
 
-      // Crafts & Textiles
       if (skillLower.includes('craft') || skillLower.includes('textile') ||
           skillLower.includes('sewing') || skillLower.includes('knitting') ||
           skillLower.includes('fabric')) {
-        return 'crafts-textiles'
+        return NFT_IMAGES["crafts-textiles"]
       }
 
-      // Woodworking
       if (skillLower.includes('wood') || skillLower.includes('carpentry') ||
           skillLower.includes('cabinet')) {
-        return 'woodworking'
+        return NFT_IMAGES["woodworking"]
       }
 
-      // Auto Skills
       if (skillLower.includes('auto') || skillLower.includes('car') ||
           skillLower.includes('vehicle') || skillLower.includes('mechanic')) {
-        return 'auto-skills'
+        return NFT_IMAGES["auto-skills"]
       }
 
-      // Metalwork
       if (skillLower.includes('metal') || skillLower.includes('welding') ||
           skillLower.includes('steel') || skillLower.includes('aluminum')) {
-        return 'metalwork'
+        return NFT_IMAGES["metalwork"]
       }
 
-      // Home Repairs
       if (skillLower.includes('home') || skillLower.includes('repair') ||
           skillLower.includes('plumbing') || skillLower.includes('electrical') ||
           skillLower.includes('maintenance')) {
-        return 'home-repairs'
+        return NFT_IMAGES["home-repairs"]
       }
     }
 
-    // If no specific category matches, put in "other"
-    return 'other'
+    return NFT_IMAGES["other"]
   }
 
-  // Group sessions by category (mutually exclusive)
-  const categoryMap = new Map()
-
-  // Initialize all categories
-  NFT_CATEGORIES.forEach(category => {
-    categoryMap.set(category.id, {
-      ...category,
-      sessions: [],
-      count: 0
-    })
-  })
-
-  // Assign each session to exactly one category
-  allSessions.forEach(session => {
-    const workshop = session.workshops as any
-    const categoryId = categorizeWorkshop(workshop)
-
-    const categoryData = categoryMap.get(categoryId)
-    if (categoryData) {
-      categoryData.sessions.push(session)
-      categoryData.count++
+  // Calculate unique categories explored
+  const exploredCategories = new Set<string>()
+  learnerBookings.forEach((booking: any) => {
+    const workshop = booking.workshops as any
+    const nftImage = getNFTImageForWorkshop(workshop)
+    const categoryKey = Object.keys(NFT_IMAGES).find(key => NFT_IMAGES[key] === nftImage)
+    if (categoryKey) {
+      exploredCategories.add(categoryKey)
     }
   })
 
-  // Convert map to array
-  const categoryData = Array.from(categoryMap.values())
-
-  // Calculate summary statistics
-  const totalSessions = allSessions.length
-  const categoriesExplored = categoryData.filter(cat => cat.count > 0).length
-
-  // Show all categories (with different treatment for those with/without sessions)
-  const categoriesWithSessions = categoryData.filter(cat => cat.count > 0)
-  const categoriesWithoutSessions = categoryData.filter(cat => cat.count === 0)
-
+  // Pagination logic (20 per page)
+  const workshopsPerPage = 20
+  const totalWorkshops = learnerBookings.length
+  const totalPages = Math.ceil(totalWorkshops / workshopsPerPage)
+  const currentPage = 1 // For now, show first page. In a real app, this would come from URL params
+  const startIndex = 0
+  const endIndex = Math.min(workshopsPerPage, totalWorkshops)
+  const currentWorkshops = learnerBookings.slice(startIndex, endIndex)
 
   return (
     <div className="min-h-screen bg-background pt-24">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <ConfettiOnLoad />
+      <div className="container mx-auto px-4 py-4 max-w-7xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -220,7 +142,7 @@ export default async function NFTsPage() {
           </Button>
         </div>
 
-        {/* Summary Section - Moved above categories */}
+        {/* Summary Section */}
         <Card className="border-2 mb-8">
           <CardHeader>
             <CardTitle>Your Learning Journey Summary</CardTitle>
@@ -228,15 +150,15 @@ export default async function NFTsPage() {
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">{totalSessions}</div>
-                <p className="text-muted-foreground">Total Sessions Completed</p>
+                <div className="text-3xl font-bold text-primary mb-2">{totalWorkshops}</div>
+                <p className="text-muted-foreground">Total Coins Earned</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-secondary mb-2">{categoriesExplored}</div>
+                <div className="text-3xl font-bold text-secondary mb-2">{exploredCategories.size}</div>
                 <p className="text-muted-foreground">Categories Explored</p>
               </div>
             </div>
-            {totalSessions === 0 && (
+            {totalWorkshops === 0 && (
               <div className="mt-6 text-center py-8">
                 <p className="text-muted-foreground mb-4">
                   Complete your first workshop session to start earning NFTs!
@@ -249,105 +171,101 @@ export default async function NFTsPage() {
           </CardContent>
         </Card>
 
-        {/* NFT Categories List */}
-        <div className="space-y-4">
-          {/* Categories with sessions - collapsible */}
-          {categoriesWithSessions.map((category) => {
-            const IconComponent = category.icon
-            return (
-              <Collapsible key={category.id}>
-                <Card className={`border-2 ${category.borderColor} hover:shadow-lg transition-shadow`}>
-                  <CollapsibleTrigger asChild>
-                    <CardContent className="p-6 cursor-pointer hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-16 h-16 ${category.bgColor} rounded-full flex items-center justify-center`}>
-                            <IconComponent className={`h-8 w-8 ${category.textColor}`} />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-xl">{category.name}</h3>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className={`text-3xl font-bold ${category.textColor}`}>
-                              {category.count}
-                            </div>
-                            <p className="text-sm text-muted-foreground">sessions</p>
-                          </div>
-                          <ChevronDown className={`h-5 w-5 ${category.textColor}`} />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="pt-0 border-t">
-                      <div className="space-y-4 mt-4">
-                        {category.sessions.map((session: any) => {
-                          const workshop = session.workshops as any
-                          const sessionDate = workshop.session_date ? new Date(workshop.session_date) : null
-                          const isValidDate = sessionDate && !isNaN(sessionDate.getTime())
+        {/* NFT Workshop List */}
+        {totalWorkshops > 0 && (
+          <>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold mb-4">Your Completed Workshops</h2>
 
-                          return (
-                            <div key={session.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                              <div className="flex-1">
-                                <h4 className="font-semibold">{workshop.title}</h4>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                                  <div className="flex items-center gap-1">
-                                    <Calendar className="h-4 w-4" />
-                                    <span>{isValidDate ? sessionDate.toLocaleDateString() : "Date TBD"}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-4 w-4" />
-                                    <span>{isValidDate ? sessionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Time TBD"}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <MapPin className="h-4 w-4" />
-                                    <span>{workshop.location || "Location TBD"}</span>
-                                  </div>
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  Skills: {workshop.skills?.join(", ") || "N/A"}
-                                </p>
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mb-6">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {Math.min(workshopsPerPage, totalWorkshops)} of {totalWorkshops} workshops
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </Button>
+                    <span className="text-sm px-3">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {currentWorkshops.map((booking: any) => {
+                  const workshop = booking.workshops as any
+                  const sessionDate = workshop.session_date ? new Date(workshop.session_date) : null
+                  const isValidDate = sessionDate && !isNaN(sessionDate.getTime())
+                  const nftImage = getNFTImageForWorkshop(workshop)
+
+                  return (
+                    <Card key={booking.id} className="border-2 hover:shadow-lg transition-shadow">
+                      <CardContent>
+                        <div className="flex items-center gap-6">
+                          <div className="w-[215px] h-[215px] rounded-lg overflow-hidden flex-shrink-0">
+                            <Image
+                              src={nftImage}
+                              alt="NFT Badge"
+                              width={215}
+                              height={215}
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+
+                          {/* Workshop Details */}
+                          <div className="flex-1 min-w-0 ml-4">
+                            <h3 className="font-semibold text-lg mb-2 line-clamp-2">{workshop.title}</h3>
+
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4" />
+                                <span>{isValidDate ? sessionDate.toLocaleDateString() : "Date TBD"}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4" />
+                                <span>{isValidDate ? sessionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Time TBD"}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4" />
+                                <span className="truncate">{workshop.location || "Location TBD"}</span>
                               </div>
                             </div>
-                          )
-                        })}
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Card>
-              </Collapsible>
-            )
-          })}
 
-          {/* Categories without sessions - thinner, non-collapsible */}
-          {categoriesWithoutSessions.map((category) => {
-            const IconComponent = category.icon
-            return (
-              <Card key={category.id} className={`border-2 ${category.borderColor} opacity-75`}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 ${category.bgColor} rounded-full flex items-center justify-center`}>
-                        <IconComponent className={`h-6 w-6 ${category.textColor}`} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg">{category.name}</h3>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-2xl font-bold ${category.textColor}`}>
-                        {category.count}
-                      </div>
-                      <p className="text-sm text-muted-foreground">sessions</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                            <p className="text-sm text-muted-foreground mt-2">
+                              <span className="font-medium">Skills:</span> {workshop.skills?.join(", ") || "N/A"}
+                            </p>
+
+                            {workshop.description && (
+                              <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
+                                <span className="font-medium">Description:</span> {workshop.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

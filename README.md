@@ -249,6 +249,7 @@ We welcome contributions from the community! Here's how you can help:
 - Enhanced UI/UX with improved booking flow
 - Added comprehensive search and filtering
 - Implemented real-time notifications
+- **Fixed Timezone Handling** - Workshop creation and booking now works seamlessly across all timezones with client-side conversion
 
 ## Community Impact
 

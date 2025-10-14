@@ -20,9 +20,8 @@ import confetti from "canvas-confetti"
 import { Button } from "@/components/ui/button"
 
 // Client component for confetti on page load
-export function ConfettiOnLoad() {
+export function ConfettiOnLoad({ duration = 3 * 1000 }: { duration?: number }) {
   useEffect(() => {
-    const duration = 3 * 1000
     const animationEnd = Date.now() + duration
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }
 

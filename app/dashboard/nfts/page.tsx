@@ -7,6 +7,22 @@ import { ArrowLeft, Calendar, MapPin, Clock, ChevronLeft, ChevronRight } from "l
 import Image from "next/image"
 import { ConfettiOnLoad } from "@/components/ui/confetti"
 
+// TypeScript interfaces for better type safety
+interface Workshop {
+  title: string;
+  description: string | null;
+  session_date: string | null;
+  location: string | null;
+  skills: string[] | null;
+}
+
+interface Booking {
+  id: string;
+  created_at: string;
+  workshops: Workshop | null;
+  // Add other booking properties as needed
+}
+
 // NFT Images Configuration
 const NFT_IMAGES: { [key: string]: string } = {
   "woodworking": "/WoodworkingNFT.avif",
@@ -30,7 +46,7 @@ export default async function NFTsPage() {
   }
 
   // Fetch completed bookings as learner only (workshops user has taken)
-  let learnerBookings: any[] = []
+  let learnerBookings: Booking[] = []
 
   try {
     const { data: learnerResult } = await supabase
@@ -55,65 +71,46 @@ export default async function NFTsPage() {
     learnerBookings = []
   }
 
-  // Helper function to get NFT image for a workshop based on skills
-  const getNFTImageForWorkshop = (workshop: any): string => {
-    const skills = workshop?.skills || []
-
-    if (!skills || skills.length === 0) {
-      return NFT_IMAGES["other"]
-    }
-
-    // Check skills against categories to find the right NFT image
-    for (const skill of skills) {
-      const skillLower = skill?.toLowerCase() || ''
-
-      if (skillLower.includes('3d printing') || skillLower.includes('3d print') ||
-          skillLower.includes('cnc') || skillLower.includes('laser') ||
-          skillLower.includes('cad') || skillLower.includes('digital fabrication')) {
-        return NFT_IMAGES["digital-fabrication"]
-      }
-
-      if (skillLower.includes('craft') || skillLower.includes('textile') ||
-          skillLower.includes('sewing') || skillLower.includes('knitting') ||
-          skillLower.includes('fabric')) {
-        return NFT_IMAGES["crafts-textiles"]
-      }
-
-      if (skillLower.includes('wood') || skillLower.includes('carpentry') ||
-          skillLower.includes('cabinet')) {
-        return NFT_IMAGES["woodworking"]
-      }
-
-      if (skillLower.includes('auto') || skillLower.includes('car') ||
-          skillLower.includes('vehicle') || skillLower.includes('mechanic')) {
-        return NFT_IMAGES["auto-skills"]
-      }
-
-      if (skillLower.includes('metal') || skillLower.includes('welding') ||
-          skillLower.includes('steel') || skillLower.includes('aluminum')) {
-        return NFT_IMAGES["metalwork"]
-      }
-
-      if (skillLower.includes('home') || skillLower.includes('repair') ||
-          skillLower.includes('plumbing') || skillLower.includes('electrical') ||
-          skillLower.includes('maintenance')) {
-        return NFT_IMAGES["home-repairs"]
-      }
-    }
-
-    return NFT_IMAGES["other"]
+  // Data-driven skill category mapping for better maintainability
+  const SKILL_CATEGORY_MAP: Record<string, string[]> = {
+    "digital-fabrication": ["3d printing", "3d print", "cnc", "laser", "cad", "digital fabrication"],
+    "crafts-textiles": ["craft", "textile", "sewing", "knitting", "fabric"],
+    "woodworking": ["wood", "carpentry", "cabinet"],
+    "auto-skills": ["auto", "car", "vehicle", "mechanic"],
+    "metalwork": ["metal", "welding", "steel", "aluminum"],
+    "home-repairs": ["home", "repair", "plumbing", "electrical", "maintenance"],
   }
 
-  // Calculate unique categories explored
-  const exploredCategories = new Set<string>()
-  learnerBookings.forEach((booking: any) => {
-    const workshop = booking.workshops as any
-    const nftImage = getNFTImageForWorkshop(workshop)
-    const categoryKey = Object.keys(NFT_IMAGES).find(key => NFT_IMAGES[key] === nftImage)
-    if (categoryKey) {
-      exploredCategories.add(categoryKey)
+  // Helper function to get NFT category for a workshop based on skills
+  const getNFTCategoryForWorkshop = (workshop: Workshop | null): string => {
+    const skills = workshop?.skills || []
+
+    if (skills.length === 0) {
+      return "other"
     }
-  })
+
+    for (const skill of skills) {
+      const skillLower = skill?.toLowerCase() || ''
+      for (const category in SKILL_CATEGORY_MAP) {
+        if (SKILL_CATEGORY_MAP[category].some(keyword => skillLower.includes(keyword))) {
+          return category
+        }
+      }
+    }
+
+    return "other"
+  }
+
+  // Helper function to get NFT image for a workshop based on skills
+  const getNFTImageForWorkshop = (workshop: Workshop | null): string => {
+    const category = getNFTCategoryForWorkshop(workshop)
+    return NFT_IMAGES[category as keyof typeof NFT_IMAGES] || NFT_IMAGES["other"]
+  }
+
+  // Calculate unique categories explored (optimized)
+  const exploredCategories = new Set<string>(
+    learnerBookings.map((booking: Booking) => getNFTCategoryForWorkshop(booking.workshops))
+  )
 
   // Pagination logic (20 per page)
   const workshopsPerPage = 20
@@ -209,8 +206,8 @@ export default async function NFTsPage() {
 
               <div className="space-y-4">
                 {currentWorkshops.map((booking: any) => {
-                  const workshop = booking.workshops as any
-                  const sessionDate = workshop.session_date ? new Date(workshop.session_date) : null
+                  const workshop = booking.workshops
+                  const sessionDate = workshop?.session_date ? new Date(workshop.session_date) : null
                   const isValidDate = sessionDate && !isNaN(sessionDate.getTime())
                   const nftImage = getNFTImageForWorkshop(workshop)
 

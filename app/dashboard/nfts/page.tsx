@@ -28,13 +28,16 @@ const NFT_IMAGES: { [key: string]: string } = {
   "woodworking": "/WoodworkingNFT.avif",
   "auto-skills": "/AutoSkillsNFT.avif",
   "metalwork": "/MetalworkNFT.avif",
-  "crafts-textiles": "/CraftsTexilesNFT.avif",
+  "crafts-textiles": "/CraftsTextilesNFT.avif",
   "digital-fabrication": "/DigitalFabricationNFT.avif",
   "home-repairs": "/HomeRepairsNFT.avif",
   "other": "/OtherNFT.avif"
 }
 
-export default async function NFTsPage() {
+// Configuration constants
+const WORKSHOPS_PER_PAGE = 20
+
+export default async function NFTsPage({ searchParams }: { searchParams?: { page?: string } }) {
   const supabase = await createClient()
 
   const {
@@ -65,7 +68,7 @@ export default async function NFTsPage() {
       .eq("status", "completed")
       .order("created_at", { ascending: false })
 
-    learnerBookings = (learnerResult || []).filter((booking: any) => booking.workshops)
+    learnerBookings = (learnerResult || []).filter((booking: Booking): booking is Booking & { workshops: Workshop } => !!booking.workshops)
   } catch (error) {
     console.error("Error fetching NFT data:", error)
     learnerBookings = []
@@ -112,13 +115,12 @@ export default async function NFTsPage() {
     learnerBookings.map((booking: Booking) => getNFTCategoryForWorkshop(booking.workshops))
   )
 
-  // Pagination logic (20 per page)
-  const workshopsPerPage = 20
+  // Pagination logic with URL params support
   const totalWorkshops = learnerBookings.length
-  const totalPages = Math.ceil(totalWorkshops / workshopsPerPage)
-  const currentPage = 1 // For now, show first page. In a real app, this would come from URL params
-  const startIndex = 0
-  const endIndex = Math.min(workshopsPerPage, totalWorkshops)
+  const totalPages = Math.ceil(totalWorkshops / WORKSHOPS_PER_PAGE)
+  const currentPage = Number(searchParams?.page) || 1
+  const startIndex = (currentPage - 1) * WORKSHOPS_PER_PAGE
+  const endIndex = startIndex + WORKSHOPS_PER_PAGE
   const currentWorkshops = learnerBookings.slice(startIndex, endIndex)
 
   return (
@@ -178,7 +180,7 @@ export default async function NFTsPage() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mb-6">
                   <p className="text-sm text-muted-foreground">
-                    Showing {Math.min(workshopsPerPage, totalWorkshops)} of {totalWorkshops} workshops
+                    Showing {Math.min(WORKSHOPS_PER_PAGE, totalWorkshops)} of {totalWorkshops} workshops
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -205,9 +207,11 @@ export default async function NFTsPage() {
               )}
 
               <div className="space-y-4">
-                {currentWorkshops.map((booking: any) => {
+                {currentWorkshops.map((booking) => {
                   const workshop = booking.workshops
-                  const sessionDate = workshop?.session_date ? new Date(workshop.session_date) : null
+                  if (!workshop) return null
+
+                  const sessionDate = workshop.session_date ? new Date(workshop.session_date) : null
                   const isValidDate = sessionDate && !isNaN(sessionDate.getTime())
                   const nftImage = getNFTImageForWorkshop(workshop)
 

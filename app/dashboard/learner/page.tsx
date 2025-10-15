@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Calendar, CheckCircle } from "lucide-react"
+import { Calendar, CheckCircle, Settings } from "lucide-react"
 
 export default async function LearnerDashboardPage() {
   const supabase = await createClient()
@@ -64,6 +64,12 @@ export default async function LearnerDashboardPage() {
             </Button>
             <Button asChild variant="outline">
               <Link href="/dashboard/host/setup">Become a Host</Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/dashboard/learner/settings">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Link>
             </Button>
           </div>
         </div>

@@ -1,8 +1,7 @@
 -- Add wallet address and opt-out fields to profiles table
 alter table public.profiles
 add column if not exists wallet_address text,
-add column if not exists wallet_opted_out boolean default false,
-add column if not exists wallet_prompted boolean default false;
+add column if not exists wallet_opted_out boolean default false;
 
 -- Add check constraint for wallet address format (if provided) - only if it doesn't exist
 do $$

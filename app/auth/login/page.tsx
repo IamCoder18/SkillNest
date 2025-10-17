@@ -36,11 +36,11 @@ export default function Page() {
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("wallet_address, wallet_opted_out, wallet_prompted")
+          .select("wallet_address, wallet_opted_out")
           .eq("id", user.id)
           .single()
 
-        if (!profile?.wallet_address && !profile?.wallet_opted_out && !profile?.wallet_prompted) {
+        if (!profile?.wallet_address && !profile?.wallet_opted_out) {
           router.push("/auth/wallet-setup")
           return
         }

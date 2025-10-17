@@ -31,7 +31,7 @@ export default function WalletSetupPage() {
       // Check if user already has wallet setup or opted out
       const { data: profile } = await supabase
         .from("profiles")
-        .select("wallet_address, wallet_opted_out, wallet_prompted")
+        .select("wallet_address, wallet_opted_out")
         .eq("id", user.id)
         .single()
 
@@ -69,7 +69,7 @@ export default function WalletSetupPage() {
         .from("profiles")
         .update({
           wallet_address: walletAddress,
-          wallet_prompted: true
+          wallet_opted_out: false
         })
         .eq("id", user.id)
 
@@ -94,8 +94,7 @@ export default function WalletSetupPage() {
       const { error } = await supabase
         .from("profiles")
         .update({
-          wallet_opted_out: true,
-          wallet_prompted: true
+          wallet_opted_out: true
         })
         .eq("id", user.id)
 

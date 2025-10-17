@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Spinner } from "@/components/ui/spinner"
 import Link from "next/link"
 
 interface Booking {
@@ -29,6 +30,7 @@ export function CompleteWorkshopFormClient({ confirmedBookings, onSubmit, worksh
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [uncheckedParticipants, setUncheckedParticipants] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [currentStatus, setCurrentStatus] = useState<string>("")
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -54,6 +56,7 @@ export function CompleteWorkshopFormClient({ confirmedBookings, onSubmit, worksh
   const handleConfirmedSubmit = async (formData?: FormData) => {
     setIsSubmitting(true)
     setShowConfirmation(false)
+    setCurrentStatus("")
 
     try {
       if (formData) {
@@ -61,8 +64,13 @@ export function CompleteWorkshopFormClient({ confirmedBookings, onSubmit, worksh
       }
     } catch (error) {
       console.error('Error submitting form:', error)
+      // Don't show error to user if it's a redirect error
+      if (!(error instanceof Error) || !error.message?.includes('NEXT_REDIRECT')) {
+        // Handle other errors here if needed
+      }
     } finally {
       setIsSubmitting(false)
+      setCurrentStatus("")
     }
   }
 
@@ -120,7 +128,14 @@ export function CompleteWorkshopFormClient({ confirmedBookings, onSubmit, worksh
 
         <div className="flex gap-2">
           <Button type="submit" className="flex-1" disabled={isSubmitting}>
-            {isSubmitting ? "Completing Workshop..." : "Complete Workshop"}
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <Spinner className="h-4 w-4" />
+                {currentStatus || "Completing Workshop..."}
+              </div>
+            ) : (
+              "Complete Workshop"
+            )}
           </Button>
           <Button type="button" variant="outline" asChild>
             <Link href="/dashboard/host">Cancel</Link>
@@ -159,7 +174,14 @@ export function CompleteWorkshopFormClient({ confirmedBookings, onSubmit, worksh
               }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Completing..." : "Complete Anyway"}
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <Spinner className="h-4 w-4" />
+                  {currentStatus || "Completing..."}
+                </div>
+              ) : (
+                "Complete Anyway"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

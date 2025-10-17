@@ -32,7 +32,7 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
       bookings!workshop_id(
         id,
         status,
-        learner:learner_id(display_name, avatar_url)
+        learner:learner_id(display_name, avatar_url, wallet_address, wallet_opted_out)
       )
     `,
     )
@@ -76,7 +76,7 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
         bookings!workshop_id(
           id,
           status,
-          learner:learner_id(display_name, avatar_url)
+          learner:learner_id(display_name, avatar_url, wallet_address, wallet_opted_out)
         )
       `,
       )
@@ -110,56 +110,78 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
       tools_used: workshopData.tools_provided,
       skills_learned: workshopData.skills,
       session_duration: workshopData.duration_hours,
-      session_start_date_time: workshopData.session_date
+      session_start_date_time: workshopData.session_date,
+      wallet_address: booking.learner.wallet_address
     }))
 
-    // Call API route to save workshop data to IPFS for each learner
-    try {
-      const headersList = await headers()
-      const host = headersList.get('host') || 'localhost:3000'
+    // Filter eligible learners for token minting
+    const eligibleLearners = workshopDataArray.filter((data: any) => {
+      const booking = participatedBookings.find((b: any) => b.id === data.workshop_id)
+      return data.wallet_address && !booking?.learner?.wallet_opted_out
+    })
 
-      const uploadPromises = workshopDataArray.map(async (workshopData: any, index: number) => {
-        const httpsUrl = `https://${host}/api/save-workshop-data`
-        const httpUrl = `http://${host}/api/save-workshop-data`
+    // Call API route to mint tokens for eligible learners
+    if (eligibleLearners.length > 0) {
+      try {
+        const headersList = await headers()
+        const host = headersList.get('host') || 'localhost:3000'
 
-        let response
+        const mintPromises = eligibleLearners.map(async (learnerData: any) => {
+          const httpsUrl = `https://${host}/api/proof-of-skill`
+          const httpUrl = `http://${host}/api/proof-of-skill`
 
-        try {
-          // Try HTTPS first
-          response = await fetch(httpsUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(workshopData),
-          })
-        } catch (httpsError) {
-          // If HTTPS fails, try HTTP
-          response = await fetch(httpUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(workshopData),
-          })
-        }
+          let response
 
-        if (!response.ok) {
-          throw new Error(`API call failed for learner ${index + 1}: ${response.statusText}`)
-        }
+          try {
+            // Try HTTPS first
+            response = await fetch(httpsUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(learnerData),
+            })
+          } catch (httpsError) {
+            // If HTTPS fails, try HTTP
+            response = await fetch(httpUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(learnerData),
+            })
+          }
 
-        const result = await response.json()
-        console.log(`Workshop data saved to IPFS for ${workshopData.learner_name}:`, result.ipfs?.cid)
-        return result
-      })
+          if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`Token minting failed: ${response.statusText} - ${errorText}`)
+          }
 
-      await Promise.all(uploadPromises)
-    } catch (error) {
-      throw new Error('Failed to save workshop data to IPFS. Please try again.')
+          const result = await response.json()
+
+          // Update database with token data from API response
+          const supabase = await createClient()
+          const { error: dbError } = await supabase
+            .from('bookings')
+            .update({
+              transaction_hash: result.transaction.hash,
+              token_metadata_uri: result.ipfs.url
+            })
+            .eq('id', learnerData.workshop_id)
+
+          if (dbError) {
+            throw new Error(`Failed to store token data in database: ${dbError.message}`)
+          }
+          return result
+        })
+
+        await Promise.all(mintPromises)
+      } catch (error) {
+        throw new Error(`Failed to mint Proof of Skill tokens: ${error instanceof Error ? error.message : String(error)}`)
+      }
     }
 
-    // If we get here, IPFS upload was successful, continue with booking updates
-
+    // Update booking statuses
     for (let i = 0; i < bookingIds.length; i++) {
       const bookingId = bookingIds[i]
       const showedUp = learnerShowedUp.includes(bookingId.toString())

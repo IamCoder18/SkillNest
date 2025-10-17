@@ -58,7 +58,6 @@ export default function HostSettingsPage() {
           setBio(profile.bio || "")
           setWalletAddress(profile.wallet_address || "")
           setWalletOptedOut(profile.wallet_opted_out || false)
-          setWalletPrompted(profile.wallet_prompted || false)
         }
         if (hostProfile) {
           setSkills(hostProfile.skills || [])
@@ -111,7 +110,6 @@ export default function HostSettingsPage() {
         .update({
           wallet_address: walletAddress || null,
           wallet_opted_out: walletAddress ? false : true, // Auto-opt out if no address, opt in if address provided
-          wallet_prompted: true,
         })
         .eq("id", user.id)
 
@@ -148,8 +146,7 @@ export default function HostSettingsPage() {
           location,
           bio,
           wallet_address: walletAddress || null,
-          wallet_opted_out: walletOptedOut,
-          wallet_prompted: walletPrompted,
+          wallet_opted_out: walletOptedOut
         })
         .eq("id", user.id)
 

@@ -70,7 +70,6 @@ export default async function NFTsPage({ searchParams }: { searchParams?: { page
 
     learnerBookings = (learnerResult || []).filter((booking: Booking): booking is Booking & { workshops: Workshop } => !!booking.workshops)
   } catch (error) {
-    console.error("Error fetching NFT data:", error)
     learnerBookings = []
   }
 

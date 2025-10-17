@@ -18,9 +18,6 @@ export async function POST(request: NextRequest) {
     const skill = formData.get("skill") as string
     const notes = formData.get("notes") as string
 
-    console.log("=== SERVER RECEIVED BOOKING DATA ===")
-    console.log("Session date (UTC):", sessionDate)
-    console.log("Current server time (UTC):", new Date().toISOString())
 
     // sessionDate is already a UTC timestamp from the client
     const { error: bookingError } = await supabase.from("bookings").insert({
@@ -33,14 +30,11 @@ export async function POST(request: NextRequest) {
     })
 
     if (bookingError) {
-      console.error("Supabase booking insert error:", bookingError)
       return NextResponse.json({ error: `Failed to create booking: ${bookingError.message}` }, { status: 500 })
     }
 
-    console.log("Booking created successfully!")
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error creating booking:', error)
     return NextResponse.json(
       { error: 'Failed to create booking' },
       { status: 500 }

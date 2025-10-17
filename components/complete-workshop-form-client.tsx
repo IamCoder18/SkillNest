@@ -63,7 +63,6 @@ export function CompleteWorkshopFormClient({ confirmedBookings, onSubmit, worksh
         await onSubmit(formData, workshopId)
       }
     } catch (error) {
-      console.error('Error submitting form:', error)
       // Don't show error to user if it's a redirect error
       if (!(error instanceof Error) || !error.message?.includes('NEXT_REDIRECT')) {
         // Handle other errors here if needed

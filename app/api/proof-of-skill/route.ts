@@ -85,8 +85,6 @@ export async function POST(request: NextRequest) {
     const mintTx = await contract.mint(body.wallet_address, metadataUri)
     const receipt = await mintTx.wait()
 
-    console.log(`IPFS CID: ${cid}`)
-    console.log(`Proof of Skill token minted for ${body.learner_name}: ${receipt.hash}`)
     return NextResponse.json({
       success: true,
       message: 'Proof of Skill token minted successfully',

@@ -13,6 +13,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { data: profile } = await supabase.from("profiles").select("is_host").eq("id", user.id).maybeSingle()
+
+    if (!profile?.is_host) {
+      return NextResponse.json({ error: "User is not a host" }, { status: 403 })
+    }
+
     const { data: hostProfile } = await supabase.from("host_profiles").select("id").eq("user_id", user.id).maybeSingle()
 
     if (!hostProfile) {

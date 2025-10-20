@@ -13,6 +13,17 @@ import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { X, ArrowLeft, Wallet } from "lucide-react"
 import Link from "next/link"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const skillOptions = [
   "Woodworking",
@@ -146,7 +157,8 @@ export default function HostSettingsPage() {
           location,
           bio,
           wallet_address: walletAddress || null,
-          wallet_opted_out: walletOptedOut
+          wallet_opted_out: walletOptedOut,
+          is_host: true // Ensure host status is maintained
         })
         .eq("id", user.id)
 
@@ -179,12 +191,52 @@ export default function HostSettingsPage() {
   return (
     <div className="min-h-screen bg-background pt-24">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <Button asChild variant="ghost" className="mb-4">
-          <Link href="/dashboard/host">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Link>
-        </Button>
+        <div className="flex justify-between items-center mb-4">
+          <Button asChild variant="ghost">
+            <Link href="/dashboard/host">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Link>
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                Leave Host Program
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Leave Host Program?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to leave the host program? Your host profile and workshop history will be preserved, and you can rejoin anytime by clicking "Become a Host" from the learner dashboard.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    try {
+                      const response = await fetch("/api/toggle-host-status", {
+                        method: "POST",
+                      })
+                      const data = await response.json()
+                      if (data.success) {
+                        router.push("/dashboard/learner")
+                      } else {
+                        setError("Failed to leave host program")
+                      }
+                    } catch (error) {
+                      setError("An error occurred while leaving the host program")
+                    }
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Leave Program
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
 
         <Card className="border-2">
           <CardHeader>

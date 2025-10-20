@@ -14,12 +14,10 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const hostId = formData.get("host_id") as string
-    const sessionDate = formData.get("session_date") as string // This is now already a UTC timestamp
+    const sessionDate = formData.get("session_date") as string
     const skill = formData.get("skill") as string
     const notes = formData.get("notes") as string
 
-
-    // sessionDate is already a UTC timestamp from the client
     const { error: bookingError } = await supabase.from("bookings").insert({
       host_id: hostId,
       learner_id: user.id,

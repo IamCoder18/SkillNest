@@ -16,6 +16,16 @@ const abi = [
   "function supportsInterface(bytes4 interfaceId) view returns (bool)"
 ]
 
+const NFT_IMAGES: { [key: string]: string } = {
+  "Woodworking": "ipfs://QmS5KSvdtymrRLhEFFXWHjQHsqHJFcjpbWqXaqoB3iD1QS",
+  "Auto Skills": "ipfs://QmXkPxkZsn2TRvvz9L9nEzcG27qpckCkPzbB3zcPie36fk",
+  "Metalwork": "ipfs://QmWnwXPn5JYKbiQoeesB2fsuBbUzxL8yYtC97siSJqyGNz",
+  "Crafts & Textiles": "ipfs://QmXJMHozSZ4Qa7Fi49VYsgKp4v9c1tTp3WHzCqyMgEmSho",
+  "Digital Fabrication": "ipfs://QmRThjbqdbzBfzy2hn24eHtAuxAGdRMVgofqf7fWbRLMvg",
+  "Home Repairs": "ipfs://QmTpD8LB4sAsobG12g5b7xPGf4GA3Zm5tjGAKtsMHGsUxe",
+  "Other": "ipfs://QmTWAPmFedxsozJFpNcM1oNtCY65epcsxVF3XRoFwJiXBc"
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -33,6 +43,50 @@ export async function POST(request: NextRequest) {
       session_duration: body.session_duration,
       session_start_date_time: body.session_start_date_time,
       wallet_address: body.wallet_address
+    }
+
+    const nftMetadata = {
+      "name": `Proof Of Skill: ${workshopData.workshop_name}`,
+      "description": `${workshopData.learner_name} completed the workshop ${workshopData.workshop_name} hosted by ${workshopData.host_name}. Futher details are in the attributes section.`,
+      "image": `${NFT_IMAGES[workshopData.skills_learned[0]] || NFT_IMAGES["Other"]}`,
+      "attributes": [
+        {
+          "trait_type": "Learner ID",
+          "value": workshopData.learner_id
+        },
+        {
+          "trait_type": "Learner Name",
+          "value": workshopData.learner_name
+        },
+        {
+          "trait_type": "Host ID",
+          "value": workshopData.host_id
+        },
+        {
+          "trait_type": "Host Name",
+          "value": workshopData.host_name
+        },
+        {
+          "trait_type": "Workshop ID",
+          "value": workshopData.workshop_id
+        },
+        {
+          "trait_type": "Tools Used",
+          "value": workshopData.tools_used
+        },
+        {
+          "trait_type": "Skills Learned",
+          "value": workshopData.skills_learned
+        },
+        {
+          "trait_type": "Session Duration",
+          "value": workshopData.session_duration
+        },
+        {
+          "trait_type": "Session Start Time",
+          "value": workshopData.session_start_date_time
+        }
+      ]
     }
 
     if (!process.env.RPC_URL || !process.env.WALLET_PRIVATE_KEY || !process.env.CONTRACT_ADDRESS) {
@@ -55,7 +109,7 @@ export async function POST(request: NextRequest) {
     const form = new FormData()
     form.append(
       'file',
-      new Blob([JSON.stringify(workshopData)], { type: 'application/json' }),
+      new Blob([JSON.stringify(nftMetadata)], { type: 'application/json' }),
       'workshop.json'
     )
 

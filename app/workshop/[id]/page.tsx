@@ -26,7 +26,8 @@ export default async function WorkshopDetailPage({ params }: { params: Promise<{
           display_name,
           location,
           avatar_url,
-          bio
+          bio,
+          is_host
         )
       )
     `,
@@ -35,6 +36,13 @@ export default async function WorkshopDetailPage({ params }: { params: Promise<{
     .maybeSingle()
 
   if (!workshop || workshop.status !== "active") {
+    notFound()
+  }
+
+  // Check if host is still active
+  const host = workshop.host_profiles
+  const profile = Array.isArray(host.profiles) ? host.profiles[0] : host.profiles
+  if (!profile?.is_host) {
     notFound()
   }
 
@@ -55,8 +63,6 @@ export default async function WorkshopDetailPage({ params }: { params: Promise<{
     existingBooking = data
   }
 
-  const host = workshop.host_profiles
-  const profile = Array.isArray(host.profiles) ? host.profiles[0] : host.profiles
   const sessionDate = new Date(workshop.session_date)
 
   // Handle booking submission
@@ -104,7 +110,7 @@ export default async function WorkshopDetailPage({ params }: { params: Promise<{
                 <div className="mb-6">
                   <p className="text-sm font-semibold mb-2">Skills You'll Learn</p>
                   <div className="flex flex-wrap gap-2">
-                    {workshop.skills?.map((skill, idx) => (
+                    {workshop.skills?.map((skill: string, idx: number) => (
                       <Badge key={idx} variant="default" className="px-3 py-1">
                         {skill}
                       </Badge>
@@ -120,7 +126,7 @@ export default async function WorkshopDetailPage({ params }: { params: Promise<{
                       Tools & Equipment Provided
                     </p>
                     <ul className="grid sm:grid-cols-2 gap-2">
-                      {workshop.tools_provided.map((tool, idx) => (
+                      {workshop.tools_provided.map((tool: string, idx: number) => (
                         <li key={idx} className="flex items-center gap-2 text-sm">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                           <span>{tool}</span>

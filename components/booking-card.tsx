@@ -71,21 +71,24 @@ export default function BookingCard({ booking, isHost }: BookingCardProps) {
         data: { user },
       } = await supabase.auth.getUser()
       if (user) {
-        const { data: hostProfile } = await supabase
-          .from("host_profiles")
-          .select("total_sessions, hourly_rate")
-          .eq("user_id", user.id)
-          .single()
+        // Check if user is still a host
+        const { data: profile } = await supabase.from("profiles").select("is_host").eq("id", user.id).maybeSingle()
 
-        if (hostProfile) {
-          await supabase
+        if (profile?.is_host) {
+          const { data: hostProfile } = await supabase
             .from("host_profiles")
-            .update({
-              total_sessions: (hostProfile.total_sessions || 0) + 1,
-              total_earnings:
-                (hostProfile.total_earnings || 0) + (hostProfile.hourly_rate || 0) * (booking.duration_hours || 2),
-            })
+            .select("total_sessions, hourly_rate")
             .eq("user_id", user.id)
+            .single()
+
+          if (hostProfile) {
+            await supabase
+              .from("host_profiles")
+              .update({
+                total_sessions: (hostProfile.total_sessions || 0) + 1,
+              })
+              .eq("user_id", user.id)
+          }
         }
       }
 

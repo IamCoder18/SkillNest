@@ -11,7 +11,8 @@ import { Calendar, Clock, MapPin, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { CompleteWorkshopFormClient } from "@/components/complete-workshop-form-client"
 
-export default async function CompleteWorkshopPage({ params }: { params: { id: string } }) {
+export default async function CompleteWorkshopPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const {
@@ -32,15 +33,22 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
       bookings!workshop_id(
         id,
         status,
-        learner:learner_id(display_name, avatar_url, wallet_address, wallet_opted_out)
+        learner:learner_id(id, display_name, avatar_url, wallet_address, wallet_opted_out)
       )
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (!workshop) {
     redirect("/dashboard/host")
+  }
+
+  // Check if user is still a host
+  const { data: profile } = await supabase.from("profiles").select("is_host").eq("id", user.id).maybeSingle()
+
+  if (!profile?.is_host) {
+    redirect("/dashboard/host/setup")
   }
 
   if (workshop.host_profiles.user_id !== user.id) {
@@ -76,7 +84,7 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
         bookings!workshop_id(
           id,
           status,
-          learner:learner_id(display_name, avatar_url, wallet_address, wallet_opted_out)
+          learner:learner_id(id, display_name, avatar_url, wallet_address, wallet_opted_out)
         )
       `,
       )
@@ -100,7 +108,7 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
 
     // Create separate workshop data for each participated learner
     const workshopDataArray = participatedBookings.map((booking: any) => ({
-      learner_id: booking.learner_id,
+      learner_id: booking.learner.id,
       learner_name: booking.learner.display_name || "Anonymous",
       host_id: user.id,
       host_name: user.user_metadata?.display_name || user.email || "Anonymous",
@@ -250,7 +258,7 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
             <CompleteWorkshopFormClient
               confirmedBookings={confirmedBookings}
               onSubmit={completeWorkshop}
-              workshopId={params.id}
+              workshopId={id}
             />
           </CardContent>
         </Card>

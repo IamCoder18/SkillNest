@@ -38,7 +38,8 @@ export default async function BrowsePage({
         profiles:user_id (
           display_name,
           location,
-          avatar_url
+          avatar_url,
+          is_host
         )
       )
     `,
@@ -83,6 +84,15 @@ export default async function BrowsePage({
       "Home Repairs",
     ]
     filteredWorkshops = workshops.filter((w) => w.skills?.some((skill: string) => !predefinedSkills.includes(skill)))
+  }
+
+  // Filter out workshops from users who are no longer hosts
+  if (filteredWorkshops) {
+    filteredWorkshops = filteredWorkshops.filter((w) => {
+      const host = w.host_profiles
+      const profile = Array.isArray(host.profiles) ? host.profiles[0] : host.profiles
+      return profile?.is_host === true
+    })
   }
 
   return (

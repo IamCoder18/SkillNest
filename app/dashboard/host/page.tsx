@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Calendar, DollarSign, Settings, Plus, MapPin, Clock } from "lucide-react"
 import BookingCard from "@/components/booking-card"
+import { revalidatePath } from "next/cache"
 
 export default async function HostDashboardPage() {
   const supabase = await createClient()
@@ -15,6 +16,13 @@ export default async function HostDashboardPage() {
 
   if (!user) {
     redirect("/auth/login")
+  }
+
+  // Check if user is a host
+  const { data: profile } = await supabase.from("profiles").select("is_host").eq("id", user.id).maybeSingle()
+
+  if (!profile?.is_host) {
+    redirect("/dashboard/host/setup")
   }
 
   // Get host profile
@@ -75,8 +83,6 @@ export default async function HostDashboardPage() {
     .eq("host_id", hostProfile.id)
     .order("created_at", { ascending: false })
 
-  const upcomingBookings =
-    bookings?.filter((b) => b.status === "confirmed" && new Date((b.workshops as any).session_date) > new Date()) || []
   const inProgressBookings =
     bookings?.filter((b) => b.status === "confirmed" && new Date((b.workshops as any).session_date) <= new Date()) || []
   const completedBookings = bookings?.filter((b) => b.status === "completed") || []
@@ -107,14 +113,8 @@ export default async function HostDashboardPage() {
             <p className="text-muted-foreground">Manage your workshops and bookings</p>
           </div>
           <div className="flex gap-2">
-            <Button asChild variant="outline" className="bg-transparent">
-              <Link href="/dashboard/host/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </Link>
-            </Button>
             <Button asChild variant="outline">
-              <Link href="/dashboard/nfts">My NFTs</Link>
+              <Link href="/dashboard/learner">View Learner Dashboard</Link>
             </Button>
             <Button asChild>
               <Link href="/dashboard/host/create-workshop">
@@ -122,53 +122,45 @@ export default async function HostDashboardPage() {
                 Create Workshop
               </Link>
             </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/dashboard/host/settings">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Link>
+            </Button>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid sm:grid-cols-3 gap-6 mb-8">
-          <Card className="border-2">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Total Sessions</p>
-                  <p className="text-3xl font-bold">{hostProfile.total_sessions || 0}</p>
-                </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid sm:grid-cols-2 gap-6 mb-8">
+           <Card className="border-2">
+             <CardContent className="p-6">
+               <div className="flex items-center justify-between">
+                 <div>
+                   <p className="text-sm text-muted-foreground mb-1">Total Workshops Hosted</p>
+                   <p className="text-3xl font-bold">{workshops?.length || 0}</p>
+                 </div>
+                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                   <Calendar className="h-6 w-6 text-primary" />
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
 
-          <Card className="border-2">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Active Workshops</p>
-                  <p className="text-3xl font-bold">{activeWorkshops.length}</p>
-                </div>
-                <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-secondary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Total Earnings</p>
-                  <p className="text-3xl font-bold">${hostProfile.total_earnings?.toFixed(0) || 0}</p>
-                </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+           <Card className="border-2">
+             <CardContent className="p-6">
+               <div className="flex items-center justify-between">
+                 <div>
+                   <p className="text-sm text-muted-foreground mb-1">Upcoming Workshops</p>
+                   <p className="text-3xl font-bold">{upcomingWorkshops.length}</p>
+                 </div>
+                 <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center">
+                   <Calendar className="h-6 w-6 text-secondary" />
+                 </div>
+               </div>
+             </CardContent>
+           </Card>
+         </div>
 
         {inProgressWorkshops.length > 0 && (
           <div className="mb-8">
@@ -306,23 +298,6 @@ export default async function HostDashboardPage() {
           </div>
         )}
 
-        {/* Upcoming Sessions */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Upcoming Bookings</h2>
-          {upcomingBookings.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">No upcoming bookings</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {upcomingBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} isHost={true} />
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Completed Sessions */}
         {completedBookings.length > 0 && (

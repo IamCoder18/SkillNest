@@ -12,10 +12,10 @@ export default async function DashboardPage() {
     redirect("/auth/login")
   }
 
-  const { data: hostProfile } = await supabase.from("host_profiles").select("*").eq("user_id", user.id).maybeSingle()
+  const { data: profile } = await supabase.from("profiles").select("is_host").eq("id", user.id).maybeSingle()
 
   // Redirect based on user type
-  if (hostProfile) {
+  if (profile?.is_host) {
     redirect("/dashboard/host")
   } else {
     redirect("/dashboard/learner")

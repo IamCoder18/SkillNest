@@ -12,7 +12,7 @@ export default async function HostDetailPage({ params }: { params: Promise<{ id:
   // Fetch host profile
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle()
 
-  if (!profile) {
+  if (!profile || !profile.is_host) {
     notFound()
   }
 
@@ -62,7 +62,7 @@ export default async function HostDetailPage({ params }: { params: Promise<{ id:
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {hostProfile.skills?.map((skill, idx) => (
+                      {hostProfile.skills?.map((skill: string, idx: number) => (
                         <Badge key={idx} variant="default" className="px-3 py-1">
                           {skill}
                         </Badge>
@@ -80,7 +80,7 @@ export default async function HostDetailPage({ params }: { params: Promise<{ id:
                   </CardHeader>
                   <CardContent>
                     <ul className="grid sm:grid-cols-2 gap-2">
-                      {hostProfile.tools?.map((tool, idx) => (
+                      {hostProfile.tools?.map((tool: string, idx: number) => (
                         <li key={idx} className="flex items-center gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                           <span>{tool}</span>

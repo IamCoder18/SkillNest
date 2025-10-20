@@ -51,14 +51,14 @@ SkillHub bridges Alberta's growing skills gap by connecting learners with local 
 - **Responsive Design** - Optimized for desktop, tablet, and mobile *(Coming Soon)*
 - **Real-time Updates** - Live notifications for booking changes *(Coming Soon)*
 
-### Advanced Features *(Planned)*
+### Advanced Features
 - **Blockchain Verification** - ProofOfSkill soulbound NFTs for skill verification
 - **Analytics Dashboard** - Track earnings, bookings, and performance
-- **Tool Management** - Inventory tracking for hosts' equipment
-- **Location Services** - Find workshops near you with map integration
-- **Skill Matching** - AI-powered recommendations
-- **In-app Messaging** - Direct communication between hosts and learners
-- **Learning Resources** - Guides, tutorials, and safety information
+- **Tool Management** - Inventory tracking for hosts' equipment *(Planned)*
+- **Location Services** - Find workshops near you with map integration *(Planned)*
+- **Skill Matching** - AI-powered recommendations *(Planned)*
+- **In-app Messaging** - Direct communication between hosts and learners *(Planned)*
+- **Learning Resources** - Guides, tutorials, and safety information *(Planned)*
 
 ## Workshop Categories
 
@@ -102,7 +102,9 @@ SkillHub bridges Alberta's growing skills gap by connecting learners with local 
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/save-workshop-data` | Save workshop creation data |
+| POST | `/api/create-workshop` | Create a new workshop |
+| POST | `/api/create-booking` | Create a booking for a workshop |
+| GET/POST | `/api/proof-of-skill` | Handle proof of skill NFT operations |
 
 ## Getting Started
 
@@ -223,21 +225,19 @@ We welcome contributions from the community! Here's how you can help:
 - Core platform with user authentication
 - Basic workshop creation and booking
 - Host and learner dashboards
-- Payment processing foundation
+- Blockchain Verification - ProofOfSkill soulbound NFTs with IPFS metadata
+- Analytics Dashboard - Track earnings, bookings, and performance
 
-### Phase 2 (Next)
-- [ ] **Blockchain Verification** - ProofOfSkill soulbound NFTs with IPFS metadata
+### Phase 2 (Future)
 - [ ] **Unit & E2E Testing** - Comprehensive test coverage
 - [ ] **UI/UX Fixes** - Minor interface improvements and bug fixes
-
-### Phase 3 (Future)
 - [ ] **Mobile App** - React Native companion app
 - [ ] **Advanced Analytics** - Detailed insights for hosts
 - [ ] **Skill Certification** - Verified credential system
 - [ ] **Community Forums** - Discussion and Q&A features
 - [ ] **Equipment Sharing** - Tool rental marketplace
 
-### Phase 4 (Long-term)
+### Phase 3 (Long-term)
 - [ ] **AI Skill Matching** - Smart recommendations
 - [ ] **Virtual Workshops** - Online learning integration
 - [ ] **Franchise Tools** - Multi-city expansion
@@ -250,6 +250,8 @@ We welcome contributions from the community! Here's how you can help:
 - Added comprehensive search and filtering
 - Implemented real-time notifications
 - **Fixed Timezone Handling** - Workshop creation and booking now works seamlessly across all timezones with client-side conversion
+- **Blockchain Integration** - Added ProofOfSkill NFT verification system
+- **Analytics Dashboard** - Comprehensive tracking for hosts' earnings and performance
 
 ## Community Impact
 

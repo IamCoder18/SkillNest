@@ -6,6 +6,8 @@ import Link from "next/link"
 import { ArrowLeft, Calendar, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import { ConfettiOnLoad } from "@/components/ui/confetti"
+import { NFTCard } from "@/components/nft-card"
+import { getNFTCategoryForWorkshop, getNFTImageForWorkshop } from "@/lib/utils"
 
 // TypeScript interfaces for better type safety
 interface Workshop {
@@ -14,30 +16,28 @@ interface Workshop {
   session_date: string | null;
   location: string | null;
   skills: string[] | null;
+  price: number | null;
 }
 
 interface Booking {
   id: string;
   created_at: string;
   workshops: Workshop | null;
+  transaction_hash?: string;
+  token_metadata_uri?: string;
+  host?: {
+    display_name: string | null;
+    avatar_url: string | null;
+    location: string | null;
+  } | null;
   // Add other booking properties as needed
-}
-
-// NFT Images Configuration
-const NFT_IMAGES: { [key: string]: string } = {
-  "woodworking": "/WoodworkingNFT.avif",
-  "auto-skills": "/AutoSkillsNFT.avif",
-  "metalwork": "/MetalworkNFT.avif",
-  "crafts-textiles": "/CraftsTextilesNFT.avif",
-  "digital-fabrication": "/DigitalFabricationNFT.avif",
-  "home-repairs": "/HomeRepairsNFT.avif",
-  "other": "/OtherNFT.avif"
 }
 
 // Configuration constants
 const WORKSHOPS_PER_PAGE = 20
 
-export default async function NFTsPage({ searchParams }: { searchParams?: { page?: string } }) {
+export default async function NFTsPage({ searchParams }: { searchParams?: Promise<{ page?: string }> }) {
+  const searchParamsResolved = await searchParams
   const supabase = await createClient()
 
   const {
@@ -61,7 +61,13 @@ export default async function NFTsPage({ searchParams }: { searchParams?: { page
           description,
           session_date,
           location,
-          skills
+          skills,
+          price
+        ),
+        host:profiles!host_id(
+          display_name,
+          avatar_url,
+          location
         )
       `)
       .eq("learner_id", user.id)
@@ -70,44 +76,7 @@ export default async function NFTsPage({ searchParams }: { searchParams?: { page
 
     learnerBookings = (learnerResult || []).filter((booking: Booking): booking is Booking & { workshops: Workshop } => !!booking.workshops)
   } catch (error) {
-    console.error("Error fetching NFT data:", error)
     learnerBookings = []
-  }
-
-  // Data-driven skill category mapping for better maintainability
-  const SKILL_CATEGORY_MAP: Record<string, string[]> = {
-    "digital-fabrication": ["3d printing", "3d print", "cnc", "laser", "cad", "digital fabrication"],
-    "crafts-textiles": ["craft", "textile", "sewing", "knitting", "fabric"],
-    "woodworking": ["wood", "carpentry", "cabinet"],
-    "auto-skills": ["auto", "car", "vehicle", "mechanic"],
-    "metalwork": ["metal", "welding", "steel", "aluminum"],
-    "home-repairs": ["home", "repair", "plumbing", "electrical", "maintenance"],
-  }
-
-  // Helper function to get NFT category for a workshop based on skills
-  const getNFTCategoryForWorkshop = (workshop: Workshop | null): string => {
-    const skills = workshop?.skills || []
-
-    if (skills.length === 0) {
-      return "other"
-    }
-
-    for (const skill of skills) {
-      const skillLower = skill?.toLowerCase() || ''
-      for (const category in SKILL_CATEGORY_MAP) {
-        if (SKILL_CATEGORY_MAP[category].some(keyword => skillLower.includes(keyword))) {
-          return category
-        }
-      }
-    }
-
-    return "other"
-  }
-
-  // Helper function to get NFT image for a workshop based on skills
-  const getNFTImageForWorkshop = (workshop: Workshop | null): string => {
-    const category = getNFTCategoryForWorkshop(workshop)
-    return NFT_IMAGES[category as keyof typeof NFT_IMAGES] || NFT_IMAGES["other"]
   }
 
   // Calculate unique categories explored (optimized)
@@ -118,7 +87,7 @@ export default async function NFTsPage({ searchParams }: { searchParams?: { page
   // Pagination logic with URL params support
   const totalWorkshops = learnerBookings.length
   const totalPages = Math.ceil(totalWorkshops / WORKSHOPS_PER_PAGE)
-  const currentPage = Number(searchParams?.page) || 1
+  const currentPage = Number(searchParamsResolved?.page) || 1
   const startIndex = (currentPage - 1) * WORKSHOPS_PER_PAGE
   const endIndex = startIndex + WORKSHOPS_PER_PAGE
   const currentWorkshops = learnerBookings.slice(startIndex, endIndex)
@@ -142,19 +111,17 @@ export default async function NFTsPage({ searchParams }: { searchParams?: { page
         </div>
 
         {/* Summary Section */}
+        <h2 className="text-2xl font-bold mb-4">Your Learning Journey Summary</h2>
         <Card className="border-2 mb-8">
-          <CardHeader>
-            <CardTitle>Your Learning Journey Summary</CardTitle>
-          </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">{totalWorkshops}</div>
-                <p className="text-muted-foreground">Total Coins Earned</p>
+                <div className="text-4xl font-bold text-primary mb-2">{totalWorkshops}</div>
+                <p className="text-lg text-muted-foreground">Total Coins Earned</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-secondary mb-2">{exploredCategories.size}</div>
-                <p className="text-muted-foreground">Categories Explored</p>
+                <div className="text-4xl font-bold text-secondary mb-2">{exploredCategories.size}</div>
+                <p className="text-lg text-muted-foreground">Categories Explored</p>
               </div>
             </div>
             {totalWorkshops === 0 && (
@@ -206,61 +173,19 @@ export default async function NFTsPage({ searchParams }: { searchParams?: { page
                 </div>
               )}
 
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {currentWorkshops.map((booking) => {
                   const workshop = booking.workshops
                   if (!workshop) return null
 
-                  const sessionDate = workshop.session_date ? new Date(workshop.session_date) : null
-                  const isValidDate = sessionDate && !isNaN(sessionDate.getTime())
                   const nftImage = getNFTImageForWorkshop(workshop)
 
                   return (
-                    <Card key={booking.id} className="border-2 hover:shadow-lg transition-shadow">
-                      <CardContent>
-                        <div className="flex items-center gap-6">
-                          <div className="w-[215px] h-[215px] rounded-lg overflow-hidden flex-shrink-0">
-                            <Image
-                              src={nftImage}
-                              alt="NFT Badge"
-                              width={215}
-                              height={215}
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-
-                          {/* Workshop Details */}
-                          <div className="flex-1 min-w-0 ml-4">
-                            <h3 className="font-semibold text-lg mb-2 line-clamp-2">{workshop.title}</h3>
-
-                            <div className="space-y-1 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4" />
-                                <span>{isValidDate ? sessionDate.toLocaleDateString() : "Date TBD"}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4" />
-                                <span>{isValidDate ? sessionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Time TBD"}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4" />
-                                <span className="truncate">{workshop.location || "Location TBD"}</span>
-                              </div>
-                            </div>
-
-                            <p className="text-sm text-muted-foreground mt-2">
-                              <span className="font-medium">Skills:</span> {workshop.skills?.join(", ") || "N/A"}
-                            </p>
-
-                            {workshop.description && (
-                              <p className="text-sm text-muted-foreground mt-2 line-clamp-3">
-                                <span className="font-medium">Description:</span> {workshop.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <NFTCard
+                      key={booking.id}
+                      booking={booking}
+                      nftImage={nftImage}
+                    />
                   )
                 })}
               </div>

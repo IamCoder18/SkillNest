@@ -4,47 +4,67 @@ import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Calendar, CheckCircle } from "lucide-react"
+import { Calendar, CheckCircle, Settings } from "lucide-react"
+import { revalidatePath } from "next/cache"
+import BecomeHostButton from "./become-host-client"
+import { NFTCard } from "@/components/nft-card"
+import { getNFTCategoryForWorkshop, getNFTImageForWorkshop } from "@/lib/utils"
 
 export default async function LearnerDashboardPage() {
-  const supabase = await createClient()
+   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+   const {
+     data: { user },
+   } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect("/auth/login")
-  }
+   if (!user) {
+     redirect("/auth/login")
+   }
 
-  const { data: bookings } = await supabase
-    .from("bookings")
-    .select(
-      `
-      *,
-      workshops!inner(
-        title,
-        session_date,
-        duration_hours,
-        location,
-        price,
-        skills
-      ),
-      host:profiles!host_id(
-        display_name,
-        avatar_url,
-        location
-      )
-    `,
-    )
-    .eq("learner_id", user.id)
-    .order("created_at", { ascending: false })
+   // Fetch profile including last_dashboard_refresh_at before updating
+   const { data: profile } = await supabase.from("profiles").select("is_host, last_dashboard_refresh_at").eq("id", user.id).maybeSingle()
+
+   // Update last dashboard refresh timestamp
+   await supabase
+     .from("profiles")
+     .update({ last_dashboard_refresh_at: new Date().toISOString() })
+     .eq("id", user.id)
+
+   const { data: bookings } = await supabase
+     .from("bookings")
+     .select(
+       `
+       *,
+       workshops!inner(
+         title,
+         description,
+         session_date,
+         duration_hours,
+         location,
+         price,
+         skills
+       ),
+       host:profiles!host_id(
+         display_name,
+         avatar_url,
+         location
+       )
+     `,
+     )
+     .eq("learner_id", user.id)
+     .order("created_at", { ascending: false })
 
   const upcomingBookings =
     bookings?.filter((b) => b.status === "confirmed" && new Date((b.workshops as any).session_date) > new Date()) || []
   const inProgressBookings =
     bookings?.filter((b) => b.status === "confirmed" && new Date((b.workshops as any).session_date) <= new Date()) || []
   const completedBookings = bookings?.filter((b) => b.status === "completed") || []
+
+
+  // Calculate unique categories explored (optimized)
+  const exploredCategories = new Set<string>(
+    completedBookings.map((booking) => getNFTCategoryForWorkshop(booking.workshops))
+  )
 
   return (
     <div className="min-h-screen bg-background pt-24">
@@ -56,29 +76,37 @@ export default async function LearnerDashboardPage() {
             <p className="text-muted-foreground">Track your bookings and sessions</p>
           </div>
           <div className="flex gap-3">
+            {profile?.is_host && (
+              <Button asChild variant="outline">
+                <Link href="/dashboard/host">View Host Dashboard</Link>
+              </Button>
+            )}
+            {!profile?.is_host && (
+              <BecomeHostButton />
+            )}
             <Button asChild>
               <Link href="/browse">Find More Workshops</Link>
             </Button>
-            <Button asChild variant="outline">
-              <Link href="/dashboard/nfts">My NFTs</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/dashboard/host/setup">Become a Host</Link>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/dashboard/learner/settings">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Link>
             </Button>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid sm:grid-cols-2 gap-6 mb-8">
+        <div className="grid sm:grid-cols-3 gap-6 mb-8">
           <Card className="border-2">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Upcoming</p>
-                  <p className="text-3xl font-bold">{upcomingBookings.length}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Proof of Skill Tokens</p>
+                  <p className="text-3xl font-bold">{completedBookings.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-primary" />
+                <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-secondary" />
                 </div>
               </div>
             </CardContent>
@@ -88,11 +116,25 @@ export default async function LearnerDashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Completed</p>
-                  <p className="text-3xl font-bold">{completedBookings.length}</p>
+                  <p className="text-sm text-muted-foreground mb-1">Categories Explored</p>
+                  <p className="text-3xl font-bold">{exploredCategories.size}</p>
                 </div>
-                <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-secondary" />
+                <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-accent" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Upcoming Sessions</p>
+                  <p className="text-3xl font-bold">{upcomingBookings.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Calendar className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
@@ -145,10 +187,21 @@ export default async function LearnerDashboardPage() {
         {completedBookings.length > 0 && (
           <div>
             <h2 className="text-2xl font-bold mb-4">Completed Sessions</h2>
-            <div className="grid gap-4">
-              {completedBookings.slice(0, 5).map((booking) => (
-                <LearnerBookingCard key={booking.id} booking={booking} />
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {completedBookings.slice(0, 5).map((booking) => {
+                const nftImage = getNFTImageForWorkshop(booking.workshops)
+                const showConfetti = booking.completed_at && profile?.last_dashboard_refresh_at
+                  ? new Date(booking.completed_at) > new Date(profile.last_dashboard_refresh_at)
+                  : false
+                return (
+                  <NFTCard
+                    key={booking.id}
+                    booking={booking}
+                    nftImage={nftImage}
+                    showConfetti={showConfetti}
+                  />
+                )
+              })}
             </div>
           </div>
         )}

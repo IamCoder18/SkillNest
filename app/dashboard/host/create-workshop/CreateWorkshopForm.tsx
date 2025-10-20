@@ -42,11 +42,6 @@ export function CreateWorkshopForm({ hostProfile }: CreateWorkshopFormProps) {
     // Convert to UTC timestamp for server
     const utcTimestamp = userLocalDateTime.toISOString()
 
-    console.log("=== CLIENT-SIDE TIMEZONE DEBUG ===")
-    console.log("User local time input:", `${sessionDate} ${sessionTime}`)
-    console.log("Browser timezone:", Intl.DateTimeFormat().resolvedOptions().timeZone)
-    console.log("User local dateTime:", userLocalDateTime)
-    console.log("Converted UTC timestamp:", utcTimestamp)
 
     // Replace the session_date in formData with UTC timestamp
     formData.set("session_date", utcTimestamp)
@@ -69,7 +64,6 @@ export function CreateWorkshopForm({ hostProfile }: CreateWorkshopFormProps) {
 
       router.push("/dashboard/host")
     } catch (err: unknown) {
-      console.error("Form submission error:", err)
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
       setIsLoading(false)

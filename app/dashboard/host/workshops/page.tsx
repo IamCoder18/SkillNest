@@ -17,6 +17,13 @@ export default async function WorkshopsPage() {
     redirect("/auth/login")
   }
 
+  // Check if user is a host
+  const { data: profile } = await supabase.from("profiles").select("is_host").eq("id", user.id).maybeSingle()
+
+  if (!profile?.is_host) {
+    redirect("/dashboard/host/setup")
+  }
+
   // Get host profile
   const { data: hostProfile } = await supabase.from("host_profiles").select("*").eq("user_id", user.id).maybeSingle()
 

@@ -30,6 +30,22 @@ export default function Page() {
         password,
       })
       if (error) throw error
+
+      // Check if user needs wallet setup
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("wallet_address, wallet_opted_out")
+          .eq("id", user.id)
+          .single()
+
+        if (!profile?.wallet_address && !profile?.wallet_opted_out) {
+          router.push("/auth/wallet-setup")
+          return
+        }
+      }
+
       router.push("/dashboard")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")

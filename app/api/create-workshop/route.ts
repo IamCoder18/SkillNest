@@ -13,6 +13,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { data: profile } = await supabase.from("profiles").select("is_host").eq("id", user.id).maybeSingle()
+
+    if (!profile?.is_host) {
+      return NextResponse.json({ error: "User is not a host" }, { status: 403 })
+    }
+
     const { data: hostProfile } = await supabase.from("host_profiles").select("id").eq("user_id", user.id).maybeSingle()
 
     if (!hostProfile) {
@@ -30,9 +36,6 @@ export async function POST(request: NextRequest) {
     const maxParticipants = Number.parseInt(formData.get("max_participants") as string)
     const location = formData.get("location") as string
 
-    console.log("=== SERVER RECEIVED DATA ===")
-    console.log("Session date (UTC):", sessionDate)
-    console.log("Current server time (UTC):", new Date().toISOString())
 
     // sessionDate is already a UTC timestamp from the client
     const { error } = await supabase.from("workshops").insert({
@@ -50,14 +53,11 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
-      console.error("Supabase workshop insert error:", error)
       return NextResponse.json({ error: `Failed to create workshop: ${error.message}` }, { status: 500 })
     }
 
-    console.log("Workshop created successfully!")
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error creating workshop:', error)
     return NextResponse.json(
       { error: 'Failed to create workshop' },
       { status: 500 }

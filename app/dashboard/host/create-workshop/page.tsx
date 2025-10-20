@@ -37,7 +37,7 @@ export default async function CreateWorkshopPage() {
       .maybeSingle()
 
     if (profileError) {
-      console.error("Profile error:", profileError)
+      // Handle profile error silently
     }
 
     hostProfile = data
@@ -46,7 +46,6 @@ export default async function CreateWorkshopPage() {
       redirect("/dashboard/host/setup")
     }
   } catch (error) {
-    console.error("Auth error:", error)
     redirect("/auth/login")
   }
 

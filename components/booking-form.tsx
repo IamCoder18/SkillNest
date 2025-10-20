@@ -41,11 +41,6 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
     // Convert to UTC timestamp for server
     const utcTimestamp = userLocalDateTime.toISOString()
 
-    console.log("=== CLIENT-SIDE BOOKING TIMEZONE DEBUG ===")
-    console.log("User local time input:", `${sessionDate} ${sessionTime}`)
-    console.log("Browser timezone:", Intl.DateTimeFormat().resolvedOptions().timeZone)
-    console.log("User local dateTime:", userLocalDateTime)
-    console.log("Converted UTC timestamp:", utcTimestamp)
 
     const supabase = createClient()
 
@@ -55,15 +50,6 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) throw new Error("You must be logged in to book a session")
-
-      // Log time comparison for debugging (but allow past dates)
-      const currentTime = new Date()
-      console.log("Booking time comparison (UTC):", {
-        sessionTimeUTC: userLocalDateTime.getTime(),
-        currentTimeUTC: currentTime.getTime(),
-        isInPast: userLocalDateTime.getTime() < currentTime.getTime(),
-        differenceMinutes: Math.floor((userLocalDateTime.getTime() - currentTime.getTime()) / (1000 * 60))
-      })
 
       // Note: Allowing past dates as requested
 
@@ -89,22 +75,13 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
         throw new Error(result.error)
       }
 
-      console.log("Booking created successfully:", {
-        host_id: hostId,
-        learner_id: user.id,
-        session_date: utcTimestamp,
-        skill,
-        status: "pending"
-      })
 
       setSuccess(true)
       setTimeout(() => {
         router.push("/dashboard/learner")
       }, 2000)
     } catch (err: unknown) {
-      console.error("Booking form error:", err)
       const errorMessage = err instanceof Error ? err.message : "An error occurred"
-      console.error("Error message:", errorMessage)
       setError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -190,7 +167,6 @@ export default function BookingForm({ hostId, hostSkills }: BookingFormProps) {
             const timezoneInput = document.getElementById('user_timezone');
             if (timezoneInput) {
               timezoneInput.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
-              console.log('Booking form - User timezone detected:', timezoneInput.value);
             }
           });
         `

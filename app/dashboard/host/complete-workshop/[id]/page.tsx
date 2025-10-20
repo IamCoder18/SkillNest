@@ -11,7 +11,8 @@ import { Calendar, Clock, MapPin, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { CompleteWorkshopFormClient } from "@/components/complete-workshop-form-client"
 
-export default async function CompleteWorkshopPage({ params }: { params: { id: string } }) {
+export default async function CompleteWorkshopPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const {
@@ -32,15 +33,22 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
       bookings!workshop_id(
         id,
         status,
-        learner:learner_id(display_name, avatar_url)
+        learner:learner_id(id, display_name, avatar_url, wallet_address, wallet_opted_out)
       )
     `,
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (!workshop) {
     redirect("/dashboard/host")
+  }
+
+  // Check if user is still a host
+  const { data: profile } = await supabase.from("profiles").select("is_host").eq("id", user.id).maybeSingle()
+
+  if (!profile?.is_host) {
+    redirect("/dashboard/host/setup")
   }
 
   if (workshop.host_profiles.user_id !== user.id) {
@@ -76,7 +84,7 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
         bookings!workshop_id(
           id,
           status,
-          learner:learner_id(display_name, avatar_url)
+          learner:learner_id(id, display_name, avatar_url, wallet_address, wallet_opted_out)
         )
       `,
       )
@@ -100,66 +108,80 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
 
     // Create separate workshop data for each participated learner
     const workshopDataArray = participatedBookings.map((booking: any) => ({
-      learner_id: booking.learner_id,
+      learner_id: booking.learner.id,
       learner_name: booking.learner.display_name || "Anonymous",
       host_id: user.id,
       host_name: user.user_metadata?.display_name || user.email || "Anonymous",
       workshop_name: workshopData.title,
       workshop_id: booking.id,
       workshop_description: workshopData.description,
-      tools_used: workshopData.tools_provided,
+      tools_used: Array.isArray(workshopData.tools_provided) ? workshopData.tools_provided.join(', ') : workshopData.tools_provided,
       skills_learned: workshopData.skills,
-      session_duration: workshopData.duration_hours,
-      session_start_date_time: workshopData.session_date
+      session_duration: String(workshopData.duration_hours),
+      session_start_date_time: workshopData.session_date,
+      wallet_address: booking.learner.wallet_address
     }))
 
-    // Call API route to save workshop data to IPFS for each learner
-    try {
-      const headersList = await headers()
-      const host = headersList.get('host') || 'localhost:3000'
+    // Filter eligible learners for token minting
+    const eligibleLearners = workshopDataArray.filter((data: any) => {
+      const booking = participatedBookings.find((b: any) => b.id === data.workshop_id)
+      return data.wallet_address && !booking?.learner?.wallet_opted_out
+    })
 
-      const uploadPromises = workshopDataArray.map(async (workshopData: any, index: number) => {
-        const httpsUrl = `https://${host}/api/save-workshop-data`
-        const httpUrl = `http://${host}/api/save-workshop-data`
+    // Call API route to mint tokens for eligible learners
+    if (eligibleLearners.length > 0) {
+      try {
+        const headersList = await headers()
+        const host = headersList.get('host') || 'localhost:3000'
 
-        let response
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${host}`
+        const apiUrl = `${baseUrl}/api/proof-of-skill`
 
-        try {
-          // Try HTTPS first
-          response = await fetch(httpsUrl, {
+        const mintPromises = eligibleLearners.map(async (learnerData: any) => {
+          const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(workshopData),
+            body: JSON.stringify(learnerData),
           })
-        } catch (httpsError) {
-          // If HTTPS fails, try HTTP
-          response = await fetch(httpUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(workshopData),
-          })
-        }
 
-        if (!response.ok) {
-          throw new Error(`API call failed for learner ${index + 1}: ${response.statusText}`)
-        }
+          if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(`Token minting failed: ${response.statusText} - ${errorText}`)
+          }
 
-        const result = await response.json()
-        console.log(`Workshop data saved to IPFS for ${workshopData.learner_name}:`, result.ipfs?.cid)
-        return result
-      })
+          const result = await response.json()
 
-      await Promise.all(uploadPromises)
-    } catch (error) {
-      throw new Error('Failed to save workshop data to IPFS. Please try again.')
+          // Update database with token data from API response
+          const { error: dbError } = await supabase
+            .from('bookings')
+            .update({
+              transaction_hash: result.transaction.hash,
+              token_metadata_uri: result.ipfs.url
+            })
+            .eq('id', learnerData.workshop_id)
+
+          if (dbError) {
+            throw new Error(`Failed to store token data in database: ${dbError.message}`)
+          }
+          return result
+        })
+
+        const mintResults = await Promise.allSettled(mintPromises)
+
+        // Log any failures but don't fail the entire operation
+        mintResults.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Failed to mint token for learner ${eligibleLearners[index].learner_name}:`, result.reason)
+          }
+        })
+      } catch (error) {
+        throw new Error(`Failed to mint Proof of Skill tokens: ${error instanceof Error ? error.message : String(error)}`)
+      }
     }
 
-    // If we get here, IPFS upload was successful, continue with booking updates
-
+    // Update booking statuses
     for (let i = 0; i < bookingIds.length; i++) {
       const bookingId = bookingIds[i]
       const showedUp = learnerShowedUp.includes(bookingId.toString())
@@ -228,7 +250,7 @@ export default async function CompleteWorkshopPage({ params }: { params: { id: s
             <CompleteWorkshopFormClient
               confirmedBookings={confirmedBookings}
               onSubmit={completeWorkshop}
-              workshopId={params.id}
+              workshopId={id}
             />
           </CardContent>
         </Card>

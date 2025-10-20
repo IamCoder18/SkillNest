@@ -2,6 +2,15 @@ import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { ethers } from "ethers"
 
+export interface Workshop {
+  title: string;
+  description: string | null;
+  session_date: string | null;
+  location: string | null;
+  skills: string[] | null;
+  price: number | null;
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -28,7 +37,7 @@ export const SKILL_CATEGORY_MAP: Record<string, string[]> = {
 }
 
 // Helper function to get NFT category for a workshop based on skills
-export const getNFTCategoryForWorkshop = (workshop: any): string => {
+export const getNFTCategoryForWorkshop = (workshop: Workshop | null): string => {
   const skills = workshop?.skills || []
 
   if (skills.length === 0) {
@@ -48,7 +57,7 @@ export const getNFTCategoryForWorkshop = (workshop: any): string => {
 }
 
 // Helper function to get NFT image for a workshop based on skills
-export const getNFTImageForWorkshop = (workshop: any): string => {
+export const getNFTImageForWorkshop = (workshop: Workshop | null): string => {
   const category = getNFTCategoryForWorkshop(workshop)
   return NFT_IMAGES[category as keyof typeof NFT_IMAGES] || NFT_IMAGES["other"]
 }

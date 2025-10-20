@@ -115,9 +115,9 @@ export default async function CompleteWorkshopPage({ params }: { params: Promise
       workshop_name: workshopData.title,
       workshop_id: booking.id,
       workshop_description: workshopData.description,
-      tools_used: workshopData.tools_provided,
+      tools_used: Array.isArray(workshopData.tools_provided) ? workshopData.tools_provided.join(', ') : workshopData.tools_provided,
       skills_learned: workshopData.skills,
-      session_duration: workshopData.duration_hours,
+      session_duration: String(workshopData.duration_hours),
       session_start_date_time: workshopData.session_date,
       wallet_address: booking.learner.wallet_address
     }))

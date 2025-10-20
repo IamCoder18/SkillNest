@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         },
         {
           "trait_type": "Skills Learned",
-          "value": workshopData.skills_learned
+          "value": Array.isArray(workshopData.skills_learned) ? workshopData.skills_learned.join(', ') : workshopData.skills_learned
         },
         {
           "trait_type": "Session Duration",

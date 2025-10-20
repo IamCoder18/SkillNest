@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { validateWalletAddress } from "@/lib/utils"
 
 export default function WalletSetupPage() {
   const [walletAddress, setWalletAddress] = useState("")
@@ -43,11 +44,6 @@ export default function WalletSetupPage() {
     checkAuth()
   }, [router])
 
-  const validateWalletAddress = (address: string): boolean => {
-    if (!address.startsWith("0x")) return false
-    if (address.length !== 42) return false
-    return /^[0-9a-fA-F]+$/.test(address.slice(2))
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

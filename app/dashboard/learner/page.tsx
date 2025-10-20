@@ -8,6 +8,7 @@ import { Calendar, CheckCircle, Settings } from "lucide-react"
 import { revalidatePath } from "next/cache"
 import BecomeHostButton from "./become-host-client"
 import { NFTCard } from "@/components/nft-card"
+import { getNFTCategoryForWorkshop, getNFTImageForWorkshop } from "@/lib/utils"
 
 export default async function LearnerDashboardPage() {
    const supabase = await createClient()
@@ -59,51 +60,6 @@ export default async function LearnerDashboardPage() {
     bookings?.filter((b) => b.status === "confirmed" && new Date((b.workshops as any).session_date) <= new Date()) || []
   const completedBookings = bookings?.filter((b) => b.status === "completed") || []
 
-  // NFT Images Configuration
-  const NFT_IMAGES: { [key: string]: string } = {
-    "woodworking": "/WoodworkingNFT.avif",
-    "auto-skills": "/AutoSkillsNFT.avif",
-    "metalwork": "/MetalworkNFT.avif",
-    "crafts-textiles": "/CraftsTextilesNFT.avif",
-    "digital-fabrication": "/DigitalFabricationNFT.avif",
-    "home-repairs": "/HomeRepairsNFT.avif",
-    "other": "/OtherNFT.avif"
-  }
-
-  // Helper function to get NFT category for a workshop based on skills
-  const getNFTCategoryForWorkshop = (workshop: any): string => {
-    const skills = workshop?.skills || []
-
-    if (skills.length === 0) {
-      return "other"
-    }
-
-    const SKILL_CATEGORY_MAP: Record<string, string[]> = {
-      "digital-fabrication": ["3d printing", "3d print", "cnc", "laser", "cad", "digital fabrication"],
-      "crafts-textiles": ["craft", "textile", "sewing", "knitting", "fabric", "crafts & textiles"],
-      "woodworking": ["wood", "carpentry", "cabinet", "woodworking"],
-      "auto-skills": ["auto", "car", "vehicle", "mechanic", "auto skills"],
-      "metalwork": ["metal", "welding", "steel", "aluminum", "metalwork"],
-      "home-repairs": ["home", "repair", "plumbing", "electrical", "maintenance", "home repairs"],
-    }
-
-    for (const skill of skills) {
-      const skillLower = skill?.toLowerCase() || ''
-      for (const category in SKILL_CATEGORY_MAP) {
-        if (SKILL_CATEGORY_MAP[category].some(keyword => skillLower.includes(keyword))) {
-          return category
-        }
-      }
-    }
-
-    return "other"
-  }
-
-  // Helper function to get NFT image for a workshop based on skills
-  const getNFTImageForWorkshop = (workshop: any): string => {
-    const category = getNFTCategoryForWorkshop(workshop)
-    return NFT_IMAGES[category as keyof typeof NFT_IMAGES] || NFT_IMAGES["other"]
-  }
 
   // Calculate unique categories explored (optimized)
   const exploredCategories = new Set<string>(

@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { validateWalletAddress } from "@/lib/utils"
 
 const skillOptions = [
   "Woodworking",
@@ -94,11 +95,6 @@ export default function HostSettingsPage() {
     setSkills(skills.filter((s) => s !== skill))
   }
 
-  const validateWalletAddress = (address: string): boolean => {
-    if (!address.startsWith("0x")) return false
-    if (address.length !== 42) return false
-    return /^[0-9a-fA-F]+$/.test(address.slice(2))
-  }
 
   const handleWalletSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

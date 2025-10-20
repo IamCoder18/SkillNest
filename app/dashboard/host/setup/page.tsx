@@ -98,8 +98,6 @@ export default function HostSetupPage() {
 
       if (hostError) throw hostError
 
-      if (hostError) throw hostError
-
       router.push("/dashboard/host")
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred")

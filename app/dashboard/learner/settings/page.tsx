@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Wallet } from "lucide-react"
 import Link from "next/link"
+import { validateWalletAddress } from "@/lib/utils"
 
 export default function LearnerSettingsPage() {
   const [displayName, setDisplayName] = useState("")
@@ -47,11 +48,6 @@ export default function LearnerSettingsPage() {
     loadProfile()
   }, [])
 
-  const validateWalletAddress = (address: string): boolean => {
-    if (!address.startsWith("0x")) return false
-    if (address.length !== 42) return false
-    return /^[0-9a-fA-F]+$/.test(address.slice(2))
-  }
 
   const handleWalletSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

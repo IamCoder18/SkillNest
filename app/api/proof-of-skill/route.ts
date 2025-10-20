@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ethers } from 'ethers'
 import { createClient } from '@/lib/supabase/server'
+import { z } from 'zod'
 
 const abi = [
   "function name() view returns (string)",
@@ -26,29 +27,54 @@ const NFT_IMAGES: { [key: string]: string } = {
   "Other": "ipfs://QmTWAPmFedxsozJFpNcM1oNtCY65epcsxVF3XRoFwJiXBc"
 }
 
+const proofOfSkillSchema = z.object({
+  learner_id: z.string(),
+  learner_name: z.string(),
+  host_id: z.string(),
+  host_name: z.string(),
+  workshop_name: z.string(),
+  workshop_id: z.string(),
+  workshop_description: z.string(),
+  tools_used: z.string(),
+  skills_learned: z.array(z.string()).min(1),
+  session_duration: z.string(),
+  session_start_date_time: z.string(),
+  wallet_address: z.string().refine(ethers.isAddress, "Invalid wallet address")
+})
+
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await request.json()
+    const validatedBody = proofOfSkillSchema.parse(body)
 
     const workshopData = {
-      learner_id: body.learner_id,
-      learner_name: body.learner_name,
-      host_id: body.host_id,
-      host_name: body.host_name,
-      workshop_name: body.workshop_name,
-      workshop_id: body.workshop_id,
-      workshop_description: body.workshop_description,
-      tools_used: body.tools_used,
-      skills_learned: body.skills_learned,
-      session_duration: body.session_duration,
-      session_start_date_time: body.session_start_date_time,
-      wallet_address: body.wallet_address
+      learner_id: validatedBody.learner_id,
+      learner_name: validatedBody.learner_name,
+      host_id: validatedBody.host_id,
+      host_name: validatedBody.host_name,
+      workshop_name: validatedBody.workshop_name,
+      workshop_id: validatedBody.workshop_id,
+      workshop_description: validatedBody.workshop_description,
+      tools_used: validatedBody.tools_used,
+      skills_learned: validatedBody.skills_learned,
+      session_duration: validatedBody.session_duration,
+      session_start_date_time: validatedBody.session_start_date_time,
+      wallet_address: validatedBody.wallet_address
     }
 
     const nftMetadata = {
       "name": `Proof Of Skill: ${workshopData.workshop_name}`,
       "description": `${workshopData.learner_name} completed the workshop ${workshopData.workshop_name} hosted by ${workshopData.host_name}. Futher details are in the attributes section.`,
-      "image": `${NFT_IMAGES[workshopData.skills_learned[0]] || NFT_IMAGES["Other"]}`,
+      "image": `${NFT_IMAGES[workshopData.skills_learned?.[0]] || NFT_IMAGES["Other"]}`,
       "attributes": [
         {
           "trait_type": "Learner ID",
@@ -130,10 +156,7 @@ export async function POST(request: NextRequest) {
     const cid = result.Hash
     const metadataUri = `ipfs://${cid}`
 
-    // Validate wallet address
-    if (!body.wallet_address || !ethers.isAddress(body.wallet_address)) {
-      throw new Error(`Invalid wallet address: ${body.wallet_address}`)
-    }
+    // Wallet address is already validated by Zod schema
 
     // Mint the token
     const mintTx = await contract.mint(body.wallet_address, metadataUri)

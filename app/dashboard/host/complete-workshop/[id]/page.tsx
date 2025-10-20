@@ -134,31 +134,17 @@ export default async function CompleteWorkshopPage({ params }: { params: Promise
         const headersList = await headers()
         const host = headersList.get('host') || 'localhost:3000'
 
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${host}`
+        const apiUrl = `${baseUrl}/api/proof-of-skill`
+
         const mintPromises = eligibleLearners.map(async (learnerData: any) => {
-          const httpsUrl = `https://${host}/api/proof-of-skill`
-          const httpUrl = `http://${host}/api/proof-of-skill`
-
-          let response
-
-          try {
-            // Try HTTPS first
-            response = await fetch(httpsUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(learnerData),
-            })
-          } catch (httpsError) {
-            // If HTTPS fails, try HTTP
-            response = await fetch(httpUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(learnerData),
-            })
-          }
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(learnerData),
+          })
 
           if (!response.ok) {
             const errorText = await response.text()
@@ -168,7 +154,6 @@ export default async function CompleteWorkshopPage({ params }: { params: Promise
           const result = await response.json()
 
           // Update database with token data from API response
-          const supabase = await createClient()
           const { error: dbError } = await supabase
             .from('bookings')
             .update({
@@ -183,7 +168,14 @@ export default async function CompleteWorkshopPage({ params }: { params: Promise
           return result
         })
 
-        await Promise.all(mintPromises)
+        const mintResults = await Promise.allSettled(mintPromises)
+
+        // Log any failures but don't fail the entire operation
+        mintResults.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`Failed to mint token for learner ${eligibleLearners[index].learner_name}:`, result.reason)
+          }
+        })
       } catch (error) {
         throw new Error(`Failed to mint Proof of Skill tokens: ${error instanceof Error ? error.message : String(error)}`)
       }

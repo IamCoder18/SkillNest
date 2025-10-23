@@ -43,7 +43,7 @@ export function Navbar() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors">
-            SkillHub
+            SkillNest
           </Link>
 
           {/* Desktop Navigation */}

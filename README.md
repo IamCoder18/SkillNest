@@ -1,10 +1,10 @@
-# SkillHub - Alberta's Community for Trades & Maker Skills
+# SkillNest - Alberta's Community for Trades & Maker Skills
 
-**Connect with local experts who have the tools, space, and know-how.** Whether you're a DIY beginner or a seasoned tinkerer, SkillHub helps you learn, build, and create — together.
+**Connect with local experts who have the tools, space, and know-how.** Whether you're a DIY beginner or a seasoned tinkerer, SkillNest helps you learn, build, and create — together.
 
-## What is SkillHub?
+## What is SkillNest?
 
-SkillHub bridges Alberta's growing skills gap by connecting learners with local hosts who have expertise, tools, and space to share. From woodworking and auto repair to 3D printing and home maintenance, our community-driven platform makes practical skills accessible to everyone.
+SkillNest bridges Alberta's growing skills gap by connecting learners with local hosts who have expertise, tools, and space to share. From woodworking and auto repair to 3D printing and home maintenance, our community-driven platform makes practical skills accessible to everyone.
 
 ### For Learners
 - **Browse workshops** by skill category with advanced filtering and search
@@ -28,7 +28,7 @@ SkillHub bridges Alberta's growing skills gap by connecting learners with local 
 
 | Route | Purpose |
 |-------|---------|
-| `/` | **Landing page** - Learn about SkillHub's mission and impact |
+| `/` | **Landing page** - Learn about SkillNest's mission and impact |
 | `/about` | **Our story** - Mission, values, and community focus |
 | `/browse` | **Find workshops** - Browse by skill, search, and book sessions |
 | `/how-it-works` | **Process guide** - Simple 3-step explanation |
@@ -118,7 +118,7 @@ SkillHub bridges Alberta's growing skills gap by connecting learners with local 
 1. **Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd skillhub
+   cd skillnest
    ```
 
 2. **Install dependencies**:
@@ -151,7 +151,7 @@ SkillHub bridges Alberta's growing skills gap by connecting learners with local 
 ### Project Structure
 
 ```
-skillhub/
+skillnest/
 ├── app/                    # Next.js 13+ app directory
 │   ├── api/               # API routes
 │   ├── auth/              # Authentication pages
@@ -255,7 +255,7 @@ We welcome contributions from the community! Here's how you can help:
 
 ## Community Impact
 
-SkillHub is more than just a platform — it's a movement to:
+SkillNest is more than just a platform — it's a movement to:
 - **Close Alberta's trades gap** by making skills accessible
 - **Build stronger communities** through shared knowledge
 - **Create circular learning** where everyone teaches and learns

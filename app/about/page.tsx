@@ -14,7 +14,7 @@ export default function AboutPage() {
               Who We Are & Why We Exist
             </h1>
             <p className="text-xl text-primary-foreground/90 leading-relaxed max-w-3xl mx-auto text-pretty md:text-xl">
-              SkillHub was born from a simple idea: everyone should have access to tools, knowledge, and
+              SkillNest was born from a simple idea: everyone should have access to tools, knowledge, and
               hands-on skills — without the barriers of cost, space, or expertise. From hobbyists to aspiring
               tradespeople, we want to make learning practical skills fun, safe, and social.
             </p>
@@ -93,7 +93,7 @@ export default function AboutPage() {
                 time. They have the skills and the space, but no easy way to share them with people who want to learn.
               </p>
               <p>
-                SkillHub bridges that gap. We created a simple platform where learners can find local hosts
+                SkillNest bridges that gap. We created a simple platform where learners can find local hosts
                 offering short sessions, hands-on lessons, and access to tools. It's community-first, flexible, and
                 designed to make learning practical skills accessible to everyone.
               </p>

@@ -11,7 +11,7 @@ export default function HowItWorksPage() {
         <div className="container mx-auto px-4 py-20 md:py-32">
           <div className="max-w-4xl mx-auto text-center space-y-8 text-primary-foreground">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-balance">
-              How SkillHub Works
+              How SkillNest Works
             </h1>
             <p className="text-xl md:text-2xl text-primary-foreground/90 leading-relaxed max-w-3xl mx-auto text-pretty">
               Whether you're a learner or a host, getting started is simple. Here's how our community connects, builds
@@ -143,7 +143,7 @@ export default function HowItWorksPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground text-balance text-center">
-              Getting the Most Out of SkillHub
+              Getting the Most Out of SkillNest
             </h2>
             <div className="grid sm:grid-cols-2 gap-6">
               <Card className="border-2">

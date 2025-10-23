@@ -19,7 +19,7 @@ export default function LandingPage() {
               </p>
               <p className="text-lg text-primary-foreground/80 leading-relaxed max-w-2xl">
                 Connect with local experts who have the tools, space, and know-how. Whether you're a DIY beginner or a
-                seasoned tinkerer, SkillHub helps you learn, build, and create — together.
+                seasoned tinkerer, SkillNest helps you learn, build, and create — together.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/browse">
@@ -57,14 +57,14 @@ export default function LandingPage() {
       <section className="py-20 md:py-32 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center space-y-6">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground text-balance">Why SkillHub?</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground text-balance">Why SkillNest?</h2>
             <p className="text-2xl md:text-3xl font-semibold text-muted-foreground text-balance">
               The Skills Gap Is Growing — But So Is Our Willingness to Learn.
             </p>
             <p className="text-lg text-muted-foreground leading-relaxed">
               Across Alberta, skilled trades are in high demand — yet the next generation struggles to access the tools,
               mentorship, and hands-on experience needed to learn them. At the same time, thousands of Calgarians own
-              underused equipment or have expertise they're eager to share. SkillHub bridges that gap by
+              underused equipment or have expertise they're eager to share. SkillNest bridges that gap by
               connecting learners and hosts in one collaborative, community-driven platform.
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function LandingPage() {
               From Home Repairs to High-Tech Prototyping
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              SkillHub brings every kind of maker under one roof. Whether you want to sharpen old skills or
+              SkillNest brings every kind of maker under one roof. Whether you want to sharpen old skills or
               start from scratch, there's a host for you.
             </p>
           </div>
@@ -289,7 +289,7 @@ export default function LandingPage() {
               More Than Just a Platform — A Movement.
             </p>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              SkillHub is helping close Alberta's trades gap while building stronger, more connected
+              SkillNest is helping close Alberta's trades gap while building stronger, more connected
               communities. By sharing tools, knowledge, and passion, we're creating a circular economy of learning — one
               project at a time.
             </p>
@@ -338,7 +338,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div className="space-y-4">
-              <h3 className="text-xl font-bold">SkillHub</h3>
+              <h3 className="text-xl font-bold">SkillNest</h3>
               <p className="text-sm text-secondary-foreground/80">
                 Connecting communities through shared skills and tools.
               </p>
@@ -381,7 +381,7 @@ export default function LandingPage() {
             <div></div>
           </div>
           <div className="border-t border-secondary-foreground/20 pt-8 text-center text-sm text-secondary-foreground/80">
-            <p>© 2025 SkillHub. All Rights Reserved.</p>
+            <p>© 2025 SkillNest. All Rights Reserved.</p>
           </div>
         </div>
       </footer>

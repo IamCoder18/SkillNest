@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated theme for SkillHub - warm, community-focused palette */
+  /* Updated theme for SkillNest - warm, community-focused palette */
   --background: oklch(0.99 0.003 95);
   --foreground: oklch(0.18 0.01 260);
   --card: oklch(1 0 0);

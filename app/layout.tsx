@@ -17,7 +17,7 @@ const _geistMono = V0_Font_Geist_Mono({ subsets: ['latin'], weight: ["100","200"
 const _sourceSerif_4 = V0_Font_Source_Serif_4({ subsets: ['latin'], weight: ["200","300","400","500","600","700","800","900"] })
 
 export const metadata: Metadata = {
-  title: "SkillHub - Learn. Build. Share.",
+  title: "SkillNest - Learn. Build. Share.",
   description:
     "Alberta's Community for Trades & Maker Skills. Connect with local experts who have the tools, space, and know-how.",
 }

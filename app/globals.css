@@ -103,8 +103,8 @@
   --shadow-color: hsl(240 30% 25%);
   --radius: 0.35rem;
   --font-sans: Geist, sans-serif;
-  --font-serif: Geist, serif;
   --font-mono: Geist, monospace;
+  --font-serif: Geist, serif;
   --shadow-offset-x: 0px;
   --shadow-offset-y: 4px;
   --letter-spacing: 0em;

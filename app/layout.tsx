@@ -1,20 +1,67 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
+import localFont from 'next/font/local'
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { Toaster } from "sonner"
 import "./globals.css"
 
+const geistSans = localFont({
+  src: [
+    {
+      path: '../node_modules/geist/dist/fonts/geist-sans/Geist-Thin.woff2',
+      weight: '100',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/geist/dist/fonts/geist-sans/Geist-UltraLight.woff2',
+      weight: '200',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/geist/dist/fonts/geist-sans/Geist-Light.woff2',
+      weight: '300',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/geist/dist/fonts/geist-sans/Geist-Regular.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/geist/dist/fonts/geist-sans/Geist-Medium.woff2',
+      weight: '500',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/geist/dist/fonts/geist-sans/Geist-SemiBold.woff2',
+      weight: '600',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/geist/dist/fonts/geist-sans/Geist-Bold.woff2',
+      weight: '700',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/geist/dist/fonts/geist-sans/Geist-Black.woff2',
+      weight: '800',
+      style: 'normal',
+    },
+    {
+      path: '../node_modules/geist/dist/fonts/geist-sans/Geist-UltraBlack.woff2',
+      weight: '900',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-geist-sans',
+  display: 'swap',
+})
+
 import { Navbar } from "@/components/navbar"
+import { ThemeProvider } from "@/components/theme-provider"
 
-import { Geist as V0_Font_Geist, Geist_Mono as V0_Font_Geist_Mono, Source_Serif_4 as V0_Font_Source_Serif_4 } from 'next/font/google'
 
-// Initialize fonts
-const _geist = V0_Font_Geist({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700","800","900"] })
-const _geistMono = V0_Font_Geist_Mono({ subsets: ['latin'], weight: ["100","200","300","400","500","600","700","800","900"] })
-const _sourceSerif_4 = V0_Font_Source_Serif_4({ subsets: ['latin'], weight: ["200","300","400","500","600","700","800","900"] })
 
 export const metadata: Metadata = {
   title: "SkillNest - Learn. Build. Share.",
@@ -28,12 +75,18 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <Navbar />
-        <Suspense fallback={null}>{children}</Suspense>
-        <Analytics />
-        <Toaster />
+    <html lang="en" suppressHydrationWarning>
+      <body className={`font-sans ${geistSans.variable}`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          disableTransitionOnChange
+        >
+          <Navbar />
+          <Suspense fallback={null}>{children}</Suspense>
+          <Analytics />
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

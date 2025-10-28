@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 interface HostProfile {
   skills: string[]
@@ -19,14 +21,24 @@ interface CreateWorkshopFormProps {
 export function CreateWorkshopForm({ hostProfile }: CreateWorkshopFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setShowConfirmation(true)
+  }
+
+  const handleConfirmedSubmit = async () => {
+    setShowConfirmation(false)
     setIsLoading(true)
     setError(null)
 
-    const formData = new FormData(e.currentTarget)
+    const form = document.querySelector('form') as HTMLFormElement
+    if (!form) return
+
+    const formData = new FormData(form)
 
     // Get the raw date/time inputs
     const sessionDate = formData.get("session_date") as string
@@ -62,7 +74,10 @@ export function CreateWorkshopForm({ hostProfile }: CreateWorkshopFormProps) {
         throw new Error(result.error)
       }
 
-      router.push("/dashboard/host")
+      setShowSuccess(true)
+      setTimeout(() => {
+        router.push("/dashboard/host")
+      }, 2000)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -213,6 +228,39 @@ export function CreateWorkshopForm({ hostProfile }: CreateWorkshopFormProps) {
           <a href="/dashboard/host">Cancel</a>
         </Button>
       </div>
+
+      {/* Confirmation Modal */}
+      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create Workshop</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to create this workshop? Once created, learners will be able to book sessions with you.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmedSubmit} disabled={isLoading}>
+              {isLoading ? "Creating..." : "Create Workshop"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Success Modal */}
+      <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Workshop Created!</DialogTitle>
+            <DialogDescription>
+              Your workshop has been successfully created. Learners can now discover and book your workshop.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => router.push("/dashboard/host")}>Go to Dashboard</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   )
 }

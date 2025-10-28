@@ -18,6 +18,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 interface BookingCardProps {
   booking: any
@@ -31,6 +32,8 @@ export default function BookingCard({ booking, isHost }: BookingCardProps) {
   const [feedback, setFeedback] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isViewLearnerOpen, setIsViewLearnerOpen] = useState(false)
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false)
+  const [showCompleteConfirmation, setShowCompleteConfirmation] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -48,7 +51,12 @@ export default function BookingCard({ booking, isHost }: BookingCardProps) {
     } catch (error) {
     } finally {
       setIsLoading(false)
+      setShowCancelConfirmation(false)
     }
+  }
+
+  const handleConfirmedCancel = () => {
+    handleStatusUpdate("cancelled")
   }
 
   const handleComplete = async () => {
@@ -93,6 +101,7 @@ export default function BookingCard({ booking, isHost }: BookingCardProps) {
       }
 
       setIsDialogOpen(false)
+      setShowCompleteConfirmation(false)
       router.refresh()
     } catch (error) {
     } finally {
@@ -100,148 +109,191 @@ export default function BookingCard({ booking, isHost }: BookingCardProps) {
     }
   }
 
+  const handleConfirmedComplete = () => {
+    setShowCompleteConfirmation(true)
+  }
+
   return (
-    <Card className="border-2">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-5 w-5 text-primary" />
+    <>
+      <Card className="border-2">
+        <CardContent className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold">{learner?.display_name || "Unknown User"}</p>
+                  <Badge variant={booking.status === "pending" ? "secondary" : "default"} className="text-xs">
+                    {booking.status}
+                  </Badge>
+                </div>
               </div>
-              <div>
-                <p className="font-semibold">{learner?.display_name || "Unknown User"}</p>
-                <Badge variant={booking.status === "pending" ? "secondary" : "default"} className="text-xs">
-                  {booking.status}
-                </Badge>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span>{sessionDate.toLocaleDateString()}</span>
+                  <Clock className="h-4 w-4 text-muted-foreground ml-2" />
+                  <span>{sessionDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                </div>
+                <p className="text-sm">
+                  <span className="font-semibold">Skill:</span> {booking.skill}
+                </p>
+                {booking.notes && (
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold">Notes:</span> {booking.notes}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>{sessionDate.toLocaleDateString()}</span>
-                <Clock className="h-4 w-4 text-muted-foreground ml-2" />
-                <span>{sessionDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+            {isHost && (
+              <div className="flex flex-col gap-2">
+                {booking.status === "confirmed" && !isPast && (
+                  <>
+                    <Dialog open={isViewLearnerOpen} onOpenChange={setIsViewLearnerOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Learner
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Learner Details</DialogTitle>
+                          <DialogDescription>Information about your upcoming session learner</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                              <User className="h-8 w-8 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-lg">{learner?.display_name || "Unknown User"}</p>
+                              <p className="text-sm text-muted-foreground">Learner</p>
+                            </div>
+                          </div>
+                          <div className="space-y-2 pt-4 border-t">
+                            <div>
+                              <p className="text-sm font-semibold">Session Date</p>
+                              <p className="text-sm text-muted-foreground">
+                                {sessionDate.toLocaleDateString()} at{" "}
+                                {sessionDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold">Skill Interest</p>
+                              <p className="text-sm text-muted-foreground">{booking.skill}</p>
+                            </div>
+                            {booking.notes && (
+                              <div>
+                                <p className="text-sm font-semibold">Learner Notes</p>
+                                <p className="text-sm text-muted-foreground">{booking.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <AlertDialog open={showCancelConfirmation} onOpenChange={setShowCancelConfirmation}>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isLoading}
+                        >
+                          <X className="mr-2 h-4 w-4" />
+                          Cancel
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to cancel this booking? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleConfirmedCancel} disabled={isLoading}>
+                            {isLoading ? "Cancelling..." : "Cancel Booking"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
+                {booking.status === "confirmed" && isPast && (
+                  <AlertDialog open={showCompleteConfirmation} onOpenChange={setShowCompleteConfirmation}>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm">Mark Completed</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Complete Session</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to mark this session as completed? This will update the learner's progress and may mint Proof of Skill tokens if they have a wallet connected.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                          setShowCompleteConfirmation(false)
+                          setIsDialogOpen(true)
+                        }} disabled={isLoading}>
+                          Continue
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
-              <p className="text-sm">
-                <span className="font-semibold">Skill:</span> {booking.skill}
-              </p>
-              {booking.notes && (
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-semibold">Notes:</span> {booking.notes}
-                </p>
-              )}
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Complete Session</DialogTitle>
+            <DialogDescription>Please provide feedback about this session</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="showed-up"
+                checked={showedUp}
+                onCheckedChange={(checked) => setShowedUp(!!checked)}
+              />
+              <Label htmlFor="showed-up">Learner showed up</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="used-tools"
+                checked={usedTools}
+                onCheckedChange={(checked) => setUsedTools(!!checked)}
+              />
+              <Label htmlFor="used-tools">Learner used the tools</Label>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="feedback">Feedback (Optional)</Label>
+              <Textarea
+                id="feedback"
+                placeholder="How did the session go?"
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={3}
+              />
             </div>
           </div>
-
-          {isHost && (
-            <div className="flex flex-col gap-2">
-              {booking.status === "confirmed" && !isPast && (
-                <>
-                  <Dialog open={isViewLearnerOpen} onOpenChange={setIsViewLearnerOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Learner
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Learner Details</DialogTitle>
-                        <DialogDescription>Information about your upcoming session learner</DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="h-8 w-8 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-lg">{learner?.display_name || "Unknown User"}</p>
-                            <p className="text-sm text-muted-foreground">Learner</p>
-                          </div>
-                        </div>
-                        <div className="space-y-2 pt-4 border-t">
-                          <div>
-                            <p className="text-sm font-semibold">Session Date</p>
-                            <p className="text-sm text-muted-foreground">
-                              {sessionDate.toLocaleDateString()} at{" "}
-                              {sessionDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold">Skill Interest</p>
-                            <p className="text-sm text-muted-foreground">{booking.skill}</p>
-                          </div>
-                          {booking.notes && (
-                            <div>
-                              <p className="text-sm font-semibold">Learner Notes</p>
-                              <p className="text-sm text-muted-foreground">{booking.notes}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleStatusUpdate("cancelled")}
-                    disabled={isLoading}
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Cancel
-                  </Button>
-                </>
-              )}
-              {booking.status === "confirmed" && isPast && (
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">Mark Completed</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Complete Session</DialogTitle>
-                      <DialogDescription>Please provide feedback about this session</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="showed-up"
-                          checked={showedUp}
-                          onCheckedChange={(checked) => setShowedUp(!!checked)}
-                        />
-                        <Label htmlFor="showed-up">Learner showed up</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="used-tools"
-                          checked={usedTools}
-                          onCheckedChange={(checked) => setUsedTools(!!checked)}
-                        />
-                        <Label htmlFor="used-tools">Learner used the tools</Label>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="feedback">Feedback (Optional)</Label>
-                        <Textarea
-                          id="feedback"
-                          placeholder="How did the session go?"
-                          value={feedback}
-                          onChange={(e) => setFeedback(e.target.value)}
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-                    <Button onClick={handleComplete} disabled={isLoading} className="w-full">
-                      {isLoading ? "Completing..." : "Complete Session"}
-                    </Button>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          <Button onClick={handleComplete} disabled={isLoading} className="w-full">
+            {isLoading ? "Completing..." : "Complete Session"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

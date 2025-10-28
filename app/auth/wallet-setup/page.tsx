@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
@@ -104,6 +105,10 @@ export default function WalletSetupPage() {
     }
   }
 
+  const handleConfirmedSkip = async () => {
+    await handleSkip()
+  }
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-md">
@@ -135,15 +140,34 @@ export default function WalletSetupPage() {
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Saving..." : "Save Wallet Address"}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setShowSkipDialog(true)}
-                  disabled={isLoading}
-                >
-                  Skip for Now
-                </Button>
+                <AlertDialog open={showSkipDialog} onOpenChange={setShowSkipDialog}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled={isLoading}
+                    >
+                      Skip for Now
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Skip Wallet Setup?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to skip setting up your wallet? You won't receive "Proof of Skill" tokens,
+                        but you'll still be able to host, register for, and attend workshops just like users with a wallet address.
+                        You can always add your wallet address later in your settings.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleConfirmedSkip} disabled={isLoading}>
+                        {isLoading ? "Skipping..." : "Skip"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </form>
           </CardContent>

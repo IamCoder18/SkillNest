@@ -131,6 +131,10 @@ export default function HostSettingsPage() {
     }
   }
 
+  const handleConfirmedWalletSubmit = async () => {
+    await handleWalletSubmit({ preventDefault: () => {} } as React.FormEvent)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
@@ -169,7 +173,10 @@ export default function HostSettingsPage() {
 
       if (hostError) throw hostError
 
-      router.push("/dashboard/host")
+      setSuccess(true)
+      setTimeout(() => {
+        router.push("/dashboard/host")
+      }, 2000)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred")
       setIsSaving(false)
@@ -284,7 +291,7 @@ export default function HostSettingsPage() {
                 <p className="text-sm text-muted-foreground">
                   Connect your Ethereum wallet to receive "Proof of Skill" tokens - a secure and permanent record of workshops you've completed.
                 </p>
-                <form onSubmit={handleWalletSubmit} className="space-y-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="walletAddress">Ethereum Wallet Address</Label>
                     <Input
@@ -298,10 +305,28 @@ export default function HostSettingsPage() {
                       We only need your wallet address to send tokens. No authentication required.
                     </p>
                   </div>
-                  <Button type="submit" size="sm" disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Update Wallet Settings"}
-                  </Button>
-                </form>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button onClick={handleConfirmedWalletSubmit} size="sm" disabled={isSaving}>
+                        {isSaving ? "Saving..." : "Update Wallet Settings"}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Update Wallet Settings</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to update your wallet settings? This will affect your ability to receive Proof of Skill tokens.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmedWalletSubmit} disabled={isSaving}>
+                          {isSaving ? "Updating..." : "Update Settings"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
 
               {/* Skills */}

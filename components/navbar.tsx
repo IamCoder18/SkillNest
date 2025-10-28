@@ -39,7 +39,7 @@ export function Navbar() {
 
   return (
     <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl">
-      <div className="backdrop-blur-md bg-white/80 border-2 border-primary/20 rounded-2xl shadow-lg px-6 py-4">
+      <div className="backdrop-blur-md bg-background/80 border-2 border-primary/20 rounded-2xl shadow-lg px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="text-2xl font-bold text-primary hover:text-primary/80 transition-colors">

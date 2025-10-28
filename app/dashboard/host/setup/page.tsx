@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { X } from "lucide-react"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 const skillOptions = [
   "Woodworking",
@@ -30,6 +32,8 @@ export default function HostSetupPage() {
   const [customSkillInput, setCustomSkillInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -67,6 +71,11 @@ export default function HostSetupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setShowConfirmation(true)
+  }
+
+  const handleConfirmedSubmit = async () => {
+    setShowConfirmation(false)
     setIsLoading(true)
     setError(null)
 
@@ -98,7 +107,10 @@ export default function HostSetupPage() {
 
       if (hostError) throw hostError
 
-      router.push("/dashboard/host")
+      setShowSuccess(true)
+      setTimeout(() => {
+        router.push("/dashboard/host")
+      }, 2000)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -206,6 +218,39 @@ export default function HostSetupPage() {
                 {isLoading ? "Setting up..." : "Complete Setup"}
               </Button>
             </form>
+
+            {/* Confirmation Modal */}
+            <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Complete Host Setup</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to complete your host setup? This will create your host profile and allow you to start creating workshops.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleConfirmedSubmit} disabled={isLoading}>
+                    {isLoading ? "Setting up..." : "Complete Setup"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Success Modal */}
+            <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Welcome to Hosting!</DialogTitle>
+                  <DialogDescription>
+                    Your host profile has been successfully created. You can now create workshops and share your skills with learners.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button onClick={() => router.push("/dashboard/host")}>Go to Host Dashboard</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       </div>

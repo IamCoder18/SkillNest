@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface Booking {
   id: number
@@ -31,6 +32,8 @@ export function CompleteWorkshopFormClient({ confirmedBookings, onSubmit, worksh
   const [uncheckedParticipants, setUncheckedParticipants] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentStatus, setCurrentStatus] = useState<string>("")
+  const [showSuccess, setShowSuccess] = useState(false)
+  const router = useRouter()
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -61,6 +64,10 @@ export function CompleteWorkshopFormClient({ confirmedBookings, onSubmit, worksh
     try {
       if (formData) {
         await onSubmit(formData, workshopId)
+        setShowSuccess(true)
+        setTimeout(() => {
+          router.push("/dashboard/host")
+        }, 2000)
       }
     } catch (error) {
       // Don't show error to user if it's a redirect error
@@ -182,6 +189,21 @@ export function CompleteWorkshopFormClient({ confirmedBookings, onSubmit, worksh
                 "Complete Anyway"
               )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Modal */}
+      <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Workshop Completed!</DialogTitle>
+            <DialogDescription>
+              The workshop has been successfully marked as completed. Proof of Skill tokens have been minted for participating learners.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => router.push("/dashboard/host")}>Return to Dashboard</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -112,7 +112,10 @@ export default function LearnerSettingsPage() {
 
       if (profileError) throw profileError
 
-      router.push("/dashboard/learner")
+      setSuccess(true)
+      setTimeout(() => {
+        router.push("/dashboard/learner")
+      }, 2000)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred")
       setIsSaving(false)
@@ -186,7 +189,7 @@ export default function LearnerSettingsPage() {
                 <p className="text-sm text-muted-foreground">
                   Connect your Ethereum wallet to receive "Proof of Skill" tokens - a secure and permanent record of workshops you've completed.
                 </p>
-                <form onSubmit={handleWalletSubmit} className="space-y-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="walletAddress">Ethereum Wallet Address</Label>
                     <Input
@@ -200,10 +203,10 @@ export default function LearnerSettingsPage() {
                       We only need your wallet address to send tokens. No authentication required.
                     </p>
                   </div>
-                  <Button type="submit" size="sm" disabled={isSaving}>
+                  <Button onClick={handleWalletSubmit} size="sm" disabled={isSaving}>
                     {isSaving ? "Saving..." : "Update Wallet Settings"}
                   </Button>
-                </form>
+                </div>
               </div>
 
               {error && <p className="text-sm text-red-500">{error}</p>}

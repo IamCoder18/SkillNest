@@ -192,7 +192,7 @@ export default function HowItWorksPage() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link href="/about">
+            <Link href="/dashboard/host/setup">
               <Button
                 size="lg"
                 variant="outline"

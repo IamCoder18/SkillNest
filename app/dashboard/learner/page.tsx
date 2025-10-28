@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Calendar, CheckCircle, Settings } from "lucide-react"
 import { revalidatePath } from "next/cache"
-import BecomeHostButton from "./become-host-client"
 import { NFTCard } from "@/components/nft-card"
 import { getNFTCategoryForWorkshop, getNFTImageForWorkshop } from "@/lib/utils"
 
@@ -82,7 +81,13 @@ export default async function LearnerDashboardPage() {
               </Button>
             )}
             {!profile?.is_host && (
-              <BecomeHostButton />
+              <Link href="/dashboard/host/setup">
+                <Button
+                  variant="outline"
+                >
+                  Become a Host
+                </Button>
+              </Link>
             )}
             <Button asChild>
               <Link href="/browse">Find More Workshops</Link>

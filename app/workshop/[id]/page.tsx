@@ -225,7 +225,7 @@ export default async function WorkshopDetailPage({ params }: { params: Promise<{
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-6 w-6 text-primary" />
-                      <span className="text-3xl font-bold text-primary">${workshop.price}</span>
+                      <span className="text-3xl font-bold text-primary">{workshop.price}</span>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">Total workshop price</p>
